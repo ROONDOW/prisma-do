@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+saida/
+*.sqlite
+*.sqlite-journal
+apolices/reais/*.pdf
+!apolices/reais/.gitkeep
+.streamlit/secrets.toml

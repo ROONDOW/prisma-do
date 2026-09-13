@@ -1,0 +1,57 @@
+# Corpus real do PRISMA D&O: condições gerais PÚBLICAS de seguro RC D&O, publicadas pelas
+# próprias seguradoras em seus sites. Os PDFs NÃO são versionados no repositório; o script
+# `python -m prisma.cli baixar-corpus` baixa cada um da URL oficial e confere o SHA-256.
+# Coleta: 2026-09-13.
+
+documentos:
+  - id: chubb_capital_aberto
+    arquivo: chubb_do_capital_aberto.pdf
+    seguradora: Chubb Seguros Brasil
+    produto: RC D&O Capital Aberto
+    processo_susep: "15414.900831/2017-45"
+    versao: "202512 (vigência a partir de 11/12/2025, Lei 15.040/2024)"
+    url: https://www.chubb.com/content/dam/chubb-sites/chubb-com/br-pt/condicoes-gerais/diretores-e-administradores/capital-aberto-processo-susep-15414-900831-2017-45-versao-a-partir-de-16-12-2025.pdf
+    sha256: 9a56d2caf393f05d18660782b31d9543441395e209a2486c7048f4c163acae22
+
+  - id: berkley_2022
+    arquivo: berkley_do.pdf
+    seguradora: Berkley International do Brasil Seguros
+    produto: RC para Conselheiros, Diretores e/ou Administradores – D&O
+    processo_susep: null
+    versao: "Fevereiro 2022"
+    url: https://www.berkley.com.br/wp-content/uploads/2022/03/CG_DEO.pdf
+    sha256: ff9752986e7b88355c418c60cbbf4a5cb27a5ff633cc304f3d221cac98b0bf76
+
+  - id: berkley_2017_2023
+    arquivo: berkley_do_v2017_2023.pdf
+    seguradora: Berkley International do Brasil Seguros
+    produto: RC para Conselheiros, Diretores e/ou Administradores – D&O
+    processo_susep: "15414.901494/2017-11"
+    versao: "out/2022 – jan/2023"
+    url: https://www.berkley.com.br/wp-content/uploads/2022/03/CG-DO-901494_2017-11-vout22-jan23.pdf
+    sha256: b1af9012b7f031076eb119d95ef621ca47e2bf2762d3866c8d8f65079e80c682
+
+  - id: essor
+    arquivo: essor_do.pdf
+    seguradora: Essor Seguros (Grupo SCOR)
+    produto: RC Diretores, Administradores e Conselheiros – D&O
+    processo_susep: null
+    versao: "provisório"
+    url: https://www.essor.com.br/wp-content/uploads/essor_condicoes_gerais_responsabilidade_civil_diretores_administradores_conselheiros_provisorio.pdf
+    sha256: a46df5ed6ca6a762c3d0baff7458dc3cf8115ce482aa89c8e69b5b88bf00e737
+
+  - id: argo
+    arquivo: argo_do.pdf
+    seguradora: Argo Seguros Brasil
+    produto: RC de Diretores e Administradores – Protector
+    processo_susep: "15414.000906/2012-81"
+    versao: null
+    url: https://www.argo-protector.com.br/empresarios/downloads/Condicoes_Gerais.pdf
+    sha256: e8f6b7d6192f53fbf9e3f73676982f63215f48d76b04e5dcc7c94a7c3bca22cf
+
+normas:
+  - id: susep_637_2021
+    arquivo: susep_circular_637_2021.pdf
+    titulo: Circular SUSEP nº 637, de 27 de julho de 2021
+    url: https://www2.susep.gov.br/safe/scripts/bnweb/bnmapi.exe?router=upload%2F25074
+    sha256: f1005cda8c19ec8130a570c27289ed5b3a08618cf6eb1ab075068c9a9cee8d9b

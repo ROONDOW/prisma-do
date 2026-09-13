@@ -1,0 +1,378 @@
+# Esquema declarado de extração do PRISMA D&O (versão 1).
+#
+# Cada campo diz O QUE extrair, DE QUE TIPO é, ONDE costuma estar e COMO achar:
+#   tipo:   texto | dinheiro | data | periodo | duracao | enum | cobertura | exclusao | booleano
+#   onde:   cg (condições gerais) | espec (especificação da apólice) | ambos
+#   pistas: termos para recuperar cláusulas candidatas (BM25) e para o extrator determinístico
+#   rotulos_espec: rótulos que precedem o valor na especificação (extração determinística por âncora)
+#   instrucao: o que o LLM deve procurar; o formato de saída é o mesmo para todos os campos
+#
+# Fundamentação das dimensões: notebook "InsurMinds Projeto Final — Comparação de Apólices D&O"
+# (17 dimensões de comparação) e Circular SUSEP 637/2021.
+
+versao: 1
+
+grupos:
+  identificacao: Identificação
+  limites: Limites, franquia e prêmio
+  gatilho: Gatilho temporal (base, retroatividade e prazos)
+  coberturas: Coberturas e extensões
+  exclusoes: Exclusões
+  geral: Âmbito e cláusulas gerais
+
+# Valores válidos dos tipos enumerados que se repetem
+status_cobertura:
+  basica: "incluída na garantia básica ou extensão automática"
+  adicional: "cobertura adicional/cláusula particular prevista, depende de contratação"
+  contratada: "contratada nesta apólice (especificação)"
+  nao_contratada: "listada como não contratada na especificação"
+  excluida: "expressamente excluída"
+  nao_prevista: "não localizada no documento"
+
+status_exclusao:
+  excluido: "há exclusão expressa"
+  excluido_com_ressalva: "há exclusão, mas com ressalva/exceção relevante (ex.: custos de defesa pagos)"
+  nao_excluido: "não há exclusão desse risco no documento"
+
+campos:
+  # ------------------------------------------------------------------ identificação
+  - id: seguradora
+    grupo: identificacao
+    rotulo: Seguradora
+    tipo: texto
+    onde: ambos
+    pistas: [seguradora, "S.A.", "Seguros"]
+    rotulos_espec: ["Seguradora"]
+    instrucao: Nome da sociedade seguradora emissora do documento.
+
+  - id: processo_susep
+    grupo: identificacao
+    rotulo: Processo SUSEP
+    tipo: texto
+    onde: ambos
+    pistas: [processo susep, "15414"]
+    rotulos_espec: ["Processo SUSEP", "Processo Susep"]
+    padrao: "[0-9]{5}\\.?[0-9]{6}/[0-9]{4}-[0-9]{2}"
+    instrucao: Número do processo SUSEP do produto (formato 15414.XXXXXX/AAAA-DD).
+
+  - id: tomador
+    grupo: identificacao
+    rotulo: Tomador
+    tipo: texto
+    onde: espec
+    pistas: [tomador, CNPJ]
+    rotulos_espec: ["Tomador", "Tomador do Seguro"]
+    instrucao: Pessoa jurídica que contrata o seguro (tomador), como consta na especificação.
+
+  - id: vigencia
+    grupo: identificacao
+    rotulo: Vigência
+    tipo: periodo
+    onde: espec
+    pistas: [vigência, "das 24h", "início", "término"]
+    rotulos_espec: ["Vigência", "Período de Vigência"]
+    instrucao: Período de vigência da apólice (data de início e de término).
+
+  # ------------------------------------------------------------------ limites
+  - id: limite_maximo_garantia
+    grupo: limites
+    rotulo: Limite Máximo de Garantia (LMG)
+    tipo: dinheiro
+    onde: espec
+    pistas: [limite máximo de garantia, LMG, limite agregado]
+    rotulos_espec: ["Limite Máximo de Garantia", "LMG"]
+    instrucao: Valor em reais do Limite Máximo de Garantia da apólice.
+
+  - id: franquia
+    grupo: limites
+    rotulo: Franquia / participação obrigatória
+    tipo: dinheiro
+    onde: espec
+    pistas: [franquia, participação obrigatória, POS, dedutível]
+    rotulos_espec: ["Franquia", "Franquia (Coberturas B e C)", "Participação Obrigatória"]
+    instrucao: Valor da franquia por reclamação (em reais). Se houver franquia zero para a Cobertura A, informe o valor aplicável às coberturas B/C.
+
+  - id: sublimite_penhora_online
+    grupo: limites
+    rotulo: Sublimite — penhora online / bloqueio de bens
+    tipo: dinheiro
+    onde: espec
+    pistas: [penhora online, bloqueio de bens, sublimite]
+    rotulos_espec: ["Penhora Online e Bloqueio de Bens", "Penhora Online"]
+    instrucao: Sublimite em reais para a extensão de penhora online/bloqueio de bens.
+
+  - id: sublimite_multas
+    grupo: limites
+    rotulo: Sublimite — multas e penalidades
+    tipo: dinheiro
+    onde: espec
+    pistas: [multas, penalidades, sublimite]
+    rotulos_espec: ["Multas e Penalidades"]
+    instrucao: Sublimite em reais para a cobertura de multas e penalidades.
+
+  - id: premio_total
+    grupo: limites
+    rotulo: Prêmio total
+    tipo: dinheiro
+    onde: espec
+    pistas: [prêmio total, prêmio líquido, IOF]
+    rotulos_espec: ["Prêmio Total", "Prêmio Total (com IOF)"]
+    instrucao: Valor do prêmio total da apólice em reais (com IOF, se informado).
+
+  - id: reintegracao_limite
+    grupo: limites
+    rotulo: Reintegração do limite após sinistro
+    tipo: enum
+    onde: cg
+    valores:
+      sem_reintegracao: "não há reintegração automática; indenizações reduzem o limite"
+      com_reintegracao: "há reintegração (automática ou mediante pedido e prêmio)"
+    pistas: [reintegração, redução do limite, "não haverá reintegração", reintegrado]
+    instrucao: A apólice reintegra o limite depois de pagar uma indenização, ou o limite fica reduzido?
+
+  - id: custos_defesa_no_limite
+    grupo: limites
+    rotulo: Custos de defesa em relação ao limite
+    tipo: enum
+    onde: cg
+    valores:
+      dentro_do_limite: "custos de defesa consomem o LMG/LMI"
+      adicional_ao_limite: "custos de defesa pagos além do limite"
+    pistas: [custos de defesa, "ultrapassarem o Limite Máximo de Garantia", "integram o limite", "farão parte"]
+    instrucao: Os custos de defesa estão dentro do limite máximo (reduzem o limite) ou são pagos além dele?
+
+  # ------------------------------------------------------------------ gatilho temporal
+  - id: base_contratacao
+    grupo: gatilho
+    rotulo: Base de contratação
+    tipo: enum
+    onde: ambos
+    valores:
+      reclamacao: "à base de reclamações (claims made) sem notificação"
+      reclamacao_com_notificacao: "à base de reclamações com notificação"
+      primeira_manifestacao: "à base de reclamações com primeira manifestação ou descoberta"
+      ocorrencia: "à base de ocorrências"
+    pistas: [claims made, base de reclamação, notificação, ocorrência, primeira manifestação]
+    rotulos_espec: ["Base de Contratação", "Forma de Contratação"]
+    instrucao: Em que base a apólice é contratada? Escolha a modalidade expressamente declarada como a contratada neste documento (não a lista de definições possíveis).
+
+  - id: data_retroatividade
+    grupo: gatilho
+    rotulo: Data limite de retroatividade
+    tipo: data
+    onde: espec
+    pistas: [retroatividade, data limite de retroatividade, "data retroativa"]
+    rotulos_espec: ["Data Limite de Retroatividade", "Retroatividade"]
+    instrucao: Data limite de retroatividade da cobertura (ou "ilimitada", se assim declarado).
+
+  - id: prazo_complementar
+    grupo: gatilho
+    rotulo: Prazo complementar / adicional gratuito
+    tipo: duracao
+    onde: ambos
+    pistas: [prazo complementar, prazo adicional, "sem cobrança de prêmio", "sem ônus"]
+    rotulos_espec: ["Prazo Complementar", "Prazo Adicional"]
+    instrucao: Duração do prazo complementar (ou prazo adicional concedido sem cobrança de prêmio) para apresentação de reclamações após o fim da vigência. Informe a duração em meses ou dias, ou "conforme especificação" se o documento remeter à especificação.
+
+  - id: prazo_suplementar
+    grupo: gatilho
+    rotulo: Prazo suplementar / adicional oneroso
+    tipo: duracao
+    onde: ambos
+    pistas: [prazo suplementar, prêmio adicional, "mediante pagamento"]
+    rotulos_espec: ["Prazo Suplementar"]
+    instrucao: Duração máxima do prazo suplementar (prazo adicional contratado mediante prêmio adicional). Informe meses/dias ou "conforme especificação".
+
+  # ------------------------------------------------------------------ coberturas
+  - id: cobertura_a
+    grupo: coberturas
+    rotulo: Cobertura A — pagamento em nome dos segurados (pessoas físicas)
+    tipo: cobertura
+    onde: ambos
+    pistas: [cobertura A, garantia A, "em nome do segurado", side A, pessoas físicas, "pagamento direto"]
+    instrucao: Existe cobertura que paga ou reembolsa diretamente as perdas dos segurados pessoas físicas (Side/Cobertura A)?
+
+  - id: cobertura_b
+    grupo: coberturas
+    rotulo: Cobertura B — reembolso ao tomador
+    tipo: cobertura
+    onde: ambos
+    pistas: [cobertura B, garantia B, reembolso ao tomador, "tenha adiantado", side B, indenizar o segurado]
+    instrucao: Existe cobertura que reembolsa o tomador (empresa) quando ele adianta ou indeniza as perdas dos segurados (Side/Cobertura B)?
+
+  - id: cobertura_c
+    grupo: coberturas
+    rotulo: Cobertura C — entidade (mercado de capitais)
+    tipo: cobertura
+    onde: ambos
+    pistas: [cobertura C, mercado de capitais, valores mobiliários, "próprio tomador", entity]
+    instrucao: Existe cobertura para a própria empresa tomadora por reclamações do mercado de capitais/valores mobiliários (Side/Cobertura C)?
+
+  - id: adiantamento_custos_defesa
+    grupo: coberturas
+    rotulo: Custos de defesa — adiantamento ou reembolso
+    tipo: enum
+    onde: cg
+    valores:
+      adiantamento: "a seguradora adianta/paga os custos de defesa à medida que são incorridos"
+      reembolso: "a seguradora apenas reembolsa após o encerramento/decisão"
+    pistas: [adiantamento, custos de defesa, "à medida que", reembolso, "forem incorridos"]
+    instrucao: A seguradora adianta os custos de defesa conforme incorridos ou só reembolsa ao final?
+
+  - id: livre_escolha_advogado
+    grupo: coberturas
+    rotulo: Livre escolha do advogado
+    tipo: booleano
+    onde: cg
+    pistas: [livre escolha, advogados, "profissionais responsáveis pela defesa", "prévio consentimento"]
+    instrucao: O segurado pode escolher livremente o advogado de defesa (verdadeiro) ou precisa de advogado indicado/aprovado pela seguradora (falso)?
+
+  - id: penhora_online
+    grupo: coberturas
+    rotulo: Penhora online e bloqueio de bens
+    tipo: cobertura
+    onde: ambos
+    pistas: [penhora online, bloqueio de bens, indisponibilidade de bens, bacenjud, sisbajud]
+    instrucao: Há cobertura para penhora online, bloqueio ou indisponibilidade de bens do segurado?
+
+  - id: multas_penalidades
+    grupo: coberturas
+    rotulo: Multas e penalidades
+    tipo: cobertura
+    onde: ambos
+    pistas: [multas, penalidades, "multas e penalidades", sanções pecuniárias]
+    instrucao: Há cobertura para multas e penalidades cíveis ou administrativas impostas aos segurados?
+
+  - id: custos_investigacao
+    grupo: coberturas
+    rotulo: Custos de investigação / pré-investigação
+    tipo: cobertura
+    onde: ambos
+    pistas: [investigação, pré-investigação, inquérito, "custos de investigação"]
+    instrucao: Há cobertura para custos de investigação ou pré-investigação (antes de uma reclamação formal)?
+
+  - id: herdeiros_conjuges
+    grupo: coberturas
+    rotulo: Herdeiros, cônjuges e espólio
+    tipo: cobertura
+    onde: ambos
+    pistas: [herdeiros, espólio, cônjuge, companheiro, representantes legais]
+    instrucao: A cobertura se estende a herdeiros, cônjuges/companheiros, espólio e representantes legais dos segurados?
+
+  - id: dano_ambiental
+    grupo: coberturas
+    rotulo: Responsabilidade por dano ambiental
+    tipo: cobertura
+    onde: ambos
+    pistas: [ambiental, poluição, dano ambiental, contaminação]
+    instrucao: Há cobertura para a responsabilidade do administrador por dano ambiental? (Se o documento só exclui, o status é excluida.)
+
+  - id: praticas_trabalhistas
+    grupo: coberturas
+    rotulo: Práticas trabalhistas indevidas
+    tipo: cobertura
+    onde: ambos
+    pistas: [práticas trabalhistas, trabalhista, assédio, discriminação, empregados]
+    instrucao: Há cobertura para reclamações por práticas trabalhistas indevidas ou responsabilidade trabalhista do administrador?
+
+  - id: gerenciamento_crise
+    grupo: coberturas
+    rotulo: Gerenciamento de crise / publicidade
+    tipo: cobertura
+    onde: ambos
+    pistas: [crise, publicidade, gerenciamento de crise, relações públicas, reputação]
+    instrucao: Há cobertura para despesas de publicidade, relações públicas ou gerenciamento de crise?
+
+  - id: custos_extradicao
+    grupo: coberturas
+    rotulo: Custos de defesa em extradição
+    tipo: cobertura
+    onde: ambos
+    pistas: [extradição]
+    instrucao: Há cobertura para custos de defesa em processos de extradição?
+
+  # ------------------------------------------------------------------ exclusões
+  - id: exclusao_dolo_gatilho
+    grupo: exclusoes
+    rotulo: Exclusão de dolo — quando se aplica
+    tipo: enum
+    onde: cg
+    valores:
+      decisao_final: "só após decisão final/transitada em julgado, arbitral definitiva ou confissão"
+      decisao_nao_definitiva: "basta decisão judicial/administrativa ainda recorrível, ou a alegação"
+      sem_gatilho: "exclui ato doloso sem definir o momento de aplicação"
+    pistas: [dolo, doloso, culpa grave, transitada em julgado, decisão final, fraude]
+    instrucao: A exclusão por ato doloso/fraude só se aplica depois de decisão final (transitada em julgado, arbitral definitiva ou confissão), ou antes disso?
+
+  - id: exclusao_insolvencia
+    grupo: exclusoes
+    rotulo: Exclusão de insolvência / falência
+    tipo: exclusao
+    onde: cg
+    pistas: [insolvência, falência, recuperação judicial, liquidação]
+    instrucao: Há exclusão de reclamações decorrentes de insolvência, falência ou recuperação judicial do tomador?
+
+  - id: exclusao_danos_corporais_materiais
+    grupo: exclusoes
+    rotulo: Exclusão de danos corporais e materiais
+    tipo: exclusao
+    onde: cg
+    pistas: [danos corporais, danos materiais, morte, lesão, destruição de bens]
+    instrucao: Há exclusão de danos corporais e/ou materiais?
+
+  - id: exclusao_litigios_previos
+    grupo: exclusoes
+    rotulo: Exclusão de reclamações/fatos anteriores
+    tipo: exclusao
+    onde: cg
+    pistas: [anteriormente, fatos conhecidos, litígios pendentes, reclamação anterior, notificados em apólice anterior]
+    instrucao: Há exclusão de reclamações, litígios ou fatos anteriores/já conhecidos antes da vigência?
+
+  - id: exclusao_cibernetica
+    grupo: exclusoes
+    rotulo: Exclusão de riscos cibernéticos
+    tipo: exclusao
+    onde: cg
+    pistas: [cibernético, ataque cibernético, dados, sistemas de informática, cyber]
+    instrucao: Há exclusão de riscos cibernéticos (ataques, vazamento de dados, falhas de sistemas)?
+
+  - id: exclusao_tributaria
+    grupo: exclusoes
+    rotulo: Exclusão de reclamações tributárias
+    tipo: exclusao
+    onde: cg
+    pistas: [tributária, tributos, fiscal, impostos, previdenciária]
+    instrucao: Há exclusão de reclamações tributárias/fiscais/previdenciárias contra os segurados?
+
+  # ------------------------------------------------------------------ geral
+  - id: ambito_geografico
+    grupo: geral
+    rotulo: Âmbito geográfico
+    tipo: enum
+    onde: ambos
+    valores:
+      brasil: "somente território brasileiro"
+      mundial: "mundial / qualquer país"
+      mundial_exceto_eua_canada: "mundial, exceto EUA e/ou Canadá"
+    pistas: [âmbito geográfico, território brasileiro, mundial, Estados Unidos, Canadá]
+    rotulos_espec: ["Âmbito Geográfico", "Âmbito Territorial"]
+    instrucao: Qual é o âmbito geográfico da cobertura?
+
+  - id: subrogacao_segurados
+    grupo: geral
+    rotulo: Sub-rogação contra os segurados
+    tipo: enum
+    onde: cg
+    valores:
+      renuncia_salvo_dolo: "seguradora renuncia à sub-rogação contra segurados, salvo dolo/fraude"
+      sem_renuncia: "seguradora preserva a sub-rogação/regresso contra segurados de forma ampla"
+    pistas: [sub-rogação, regresso, ressarcimento, "direito de regresso"]
+    instrucao: A seguradora renuncia ao direito de sub-rogação/regresso contra os segurados (exceto em dolo/fraude), ou preserva esse direito de forma ampla?
+
+  - id: menciona_lei_15040
+    grupo: geral
+    rotulo: Adequação à Lei 15.040/2024 (nova Lei de Seguros)
+    tipo: booleano
+    onde: ambos
+    pistas: ["15.040", nova lei de seguros, "Lei nº 15.040"]
+    instrucao: O documento declara estar adequado ou fazer referência à Lei nº 15.040/2024?
