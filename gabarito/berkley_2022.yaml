@@ -1,0 +1,50 @@
+documento: berkley_do.pdf
+ficticio: false
+fonte_do_gabarito: anotação manual lendo o PDF (2026-09-13); campos da especificação
+  não se aplicam a condições gerais
+campos:
+  reintegracao_limite: sem_reintegracao
+  custos_defesa_no_limite: dentro_do_limite
+  base_contratacao: reclamacao_com_notificacao
+  cobertura_a: basica
+  cobertura_b: basica
+  adiantamento_custos_defesa: adiantamento
+  livre_escolha_advogado: true
+  exclusao_litigios_previos: excluido
+  seguradora:
+    aceita:
+    - berkley
+    nota: ''
+  processo_susep: null
+  prazo_complementar: 360
+  prazo_suplementar: 360
+  cobertura_c: adicional
+  penhora_online: adicional
+  multas_penalidades: adicional
+  custos_investigacao: adicional
+  herdeiros_conjuges: adicional
+  dano_ambiental: excluida
+  praticas_trabalhistas: adicional
+  gerenciamento_crise: adicional
+  custos_extradicao: adicional
+  exclusao_dolo_gatilho:
+    aceita:
+    - decisao_nao_definitiva
+    - decisao_final
+    nota: '4.1: ''decisão judicial ou arbitral ou decisão administrativa final'' —
+      não exige trânsito em julgado da judicial'
+  exclusao_insolvencia: exclusao_opcional
+  exclusao_danos_corporais_materiais:
+    aceita:
+    - excluido
+    - excluido_com_ressalva
+    nota: 4.1 c) exclui; extensão opcional de danos corporais
+  exclusao_cibernetica: excluido
+  exclusao_tributaria:
+    aceita:
+    - excluido
+    - excluido_com_ressalva
+    nota: 4.1 g.1 exclui tributos; extensão 2.2 opcional
+  ambito_geografico: mundial_exceto_eua_canada
+  subrogacao_segurados: sem_renuncia
+  menciona_lei_15040: false

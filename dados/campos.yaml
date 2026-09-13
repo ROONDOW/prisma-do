@@ -2,6 +2,7 @@
 #
 # Cada campo diz O QUE extrair, DE QUE TIPO é, ONDE costuma estar e COMO achar:
 #   tipo:   texto | dinheiro | data | periodo | duracao | enum | cobertura | exclusao | booleano
+#           (duracao aceita também "conforme_especificacao" quando a CG remete o prazo à especificação)
 #   onde:   cg (condições gerais) | espec (especificação da apólice) | ambos
 #   pistas: termos para recuperar cláusulas candidatas (BM25) e para o extrator determinístico
 #   rotulos_espec: rótulos que precedem o valor na especificação (extração determinística por âncora)
@@ -32,6 +33,7 @@ status_cobertura:
 status_exclusao:
   excluido: "há exclusão expressa"
   excluido_com_ressalva: "há exclusão, mas com ressalva/exceção relevante (ex.: custos de defesa pagos)"
+  exclusao_opcional: "só existe como cláusula específica/particular de exclusão, aplicável se incluída na apólice"
   nao_excluido: "não há exclusão desse risco no documento"
 
 campos:
@@ -224,7 +226,7 @@ campos:
     rotulo: Livre escolha do advogado
     tipo: booleano
     onde: cg
-    pistas: [livre escolha, advogados, "profissionais responsáveis pela defesa", "prévio consentimento"]
+    pistas: [livre escolha, livremente, advogados, "profissionais responsáveis pela defesa", "prévio consentimento"]
     instrucao: O segurado pode escolher livremente o advogado de defesa (verdadeiro) ou precisa de advogado indicado/aprovado pela seguradora (falso)?
 
   - id: penhora_online

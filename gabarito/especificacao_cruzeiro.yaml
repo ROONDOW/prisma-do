@@ -1,0 +1,32 @@
+documento: especificacao_cruzeiro.png
+ficticio: true
+fonte_do_gabarito: construção (gerar_sinteticas.py)
+campos:
+  seguradora: Cruzeiro do Sul Seguradora S.A. (fictícia)
+  processo_susep: 15414.000000/2026-03
+  tomador: Vértice Energia Renovável S.A. (fictícia) — CNPJ 00.000.000/0001-00
+  vigencia:
+    inicio: '2026-10-01'
+    fim: '2027-10-01'
+  limite_maximo_garantia: 40000000.0
+  franquia: 100000.0
+  premio_total: 331780.0
+  base_contratacao: reclamacao_com_notificacao
+  data_retroatividade: '2016-10-01'
+  prazo_complementar: null
+  prazo_suplementar: null
+  ambito_geografico: brasil
+  cobertura_a: contratada
+  cobertura_b: contratada
+  cobertura_c: contratada
+  penhora_online: contratada
+  sublimite_penhora_online: 4000000.0
+  multas_penalidades: contratada
+  sublimite_multas: 3000000.0
+  custos_investigacao: nao_contratada
+  herdeiros_conjuges: contratada
+  dano_ambiental: contratada
+  praticas_trabalhistas: nao_contratada
+  gerenciamento_crise: contratada
+  custos_extradicao: nao_contratada
+  adiantamento_custos_defesa: adiantamento

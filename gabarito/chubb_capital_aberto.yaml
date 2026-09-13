@@ -1,0 +1,48 @@
+documento: chubb_do_capital_aberto.pdf
+ficticio: false
+fonte_do_gabarito: anotação manual lendo o PDF (2026-09-13); campos da especificação
+  não se aplicam a condições gerais
+campos:
+  reintegracao_limite: sem_reintegracao
+  custos_defesa_no_limite: dentro_do_limite
+  base_contratacao: reclamacao_com_notificacao
+  cobertura_a: basica
+  cobertura_b: basica
+  adiantamento_custos_defesa: adiantamento
+  livre_escolha_advogado: true
+  exclusao_litigios_previos: excluido
+  seguradora:
+    aceita:
+    - chubb
+    nota: ''
+  processo_susep: 15414.900831/2017-45
+  prazo_complementar:
+    aceita:
+    - 1080
+    - conforme_especificacao
+    nota: '23.1: ''até 36 meses, conforme vier descrito na Especificação'''
+  prazo_suplementar:
+    aceita:
+    - conforme_especificacao
+    - 365
+    nota: '24.1: conforme Especificação; oferta obrigatória de 1 ano'
+  cobertura_c: adicional
+  penhora_online: adicional
+  multas_penalidades: adicional
+  custos_investigacao: adicional
+  herdeiros_conjuges: adicional
+  dano_ambiental: adicional
+  praticas_trabalhistas: adicional
+  gerenciamento_crise: adicional
+  custos_extradicao: adicional
+  exclusao_dolo_gatilho: decisao_final
+  exclusao_insolvencia: exclusao_opcional
+  exclusao_danos_corporais_materiais: excluido_com_ressalva
+  exclusao_cibernetica: exclusao_opcional
+  exclusao_tributaria: nao_excluido
+  ambito_geografico: mundial
+  subrogacao_segurados:
+    aceita:
+    - sem_renuncia
+    nota: 28.1 sub-rogação ampla; 6.6 regresso em dolo; sem renúncia expressa
+  menciona_lei_15040: true

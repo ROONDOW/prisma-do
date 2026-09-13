@@ -1,0 +1,32 @@
+documento: especificacao_aurora.pdf
+ficticio: true
+fonte_do_gabarito: construção (gerar_sinteticas.py)
+campos:
+  seguradora: Aurora Seguros S.A. (fictícia)
+  processo_susep: 15414.000000/2026-01
+  tomador: Vértice Energia Renovável S.A. (fictícia) — CNPJ 00.000.000/0001-00
+  vigencia:
+    inicio: '2026-10-01'
+    fim: '2027-10-01'
+  limite_maximo_garantia: 50000000.0
+  franquia: 250000.0
+  premio_total: 412350.0
+  base_contratacao: reclamacao_com_notificacao
+  data_retroatividade: ilimitada
+  prazo_complementar: 360
+  prazo_suplementar: 1080
+  ambito_geografico: mundial
+  cobertura_a: contratada
+  cobertura_b: contratada
+  cobertura_c: contratada
+  penhora_online: contratada
+  sublimite_penhora_online: 5000000.0
+  multas_penalidades: contratada
+  sublimite_multas: 2000000.0
+  custos_investigacao: contratada
+  herdeiros_conjuges: contratada
+  dano_ambiental: contratada
+  praticas_trabalhistas: contratada
+  gerenciamento_crise: contratada
+  custos_extradicao: contratada
+  adiantamento_custos_defesa: adiantamento

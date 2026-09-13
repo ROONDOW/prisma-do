@@ -1,0 +1,38 @@
+documento: essor_do.pdf
+ficticio: false
+fonte_do_gabarito: anotação manual lendo o PDF (2026-09-13); campos da especificação
+  não se aplicam a condições gerais
+campos:
+  reintegracao_limite: sem_reintegracao
+  custos_defesa_no_limite: dentro_do_limite
+  base_contratacao: reclamacao_com_notificacao
+  cobertura_a: basica
+  cobertura_b: basica
+  adiantamento_custos_defesa: adiantamento
+  livre_escolha_advogado: true
+  exclusao_litigios_previos: excluido
+  seguradora:
+    aceita:
+    - essor
+    - scor
+    nota: ''
+  processo_susep: null
+  prazo_complementar: conforme_especificacao
+  prazo_suplementar: conforme_especificacao
+  cobertura_c: adicional
+  penhora_online: adicional
+  multas_penalidades: adicional
+  custos_investigacao: adicional
+  herdeiros_conjuges: adicional
+  dano_ambiental: adicional
+  praticas_trabalhistas: adicional
+  gerenciamento_crise: adicional
+  custos_extradicao: adicional
+  exclusao_dolo_gatilho: decisao_final
+  exclusao_insolvencia: nao_excluido
+  exclusao_danos_corporais_materiais: excluido_com_ressalva
+  exclusao_cibernetica: nao_excluido
+  exclusao_tributaria: excluido
+  ambito_geografico: mundial_exceto_eua_canada
+  subrogacao_segurados: sem_renuncia
+  menciona_lei_15040: false

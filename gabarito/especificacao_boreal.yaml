@@ -1,0 +1,32 @@
+documento: especificacao_boreal_escaneada.pdf
+ficticio: true
+fonte_do_gabarito: construção (gerar_sinteticas.py)
+campos:
+  seguradora: Boreal Companhia de Seguros (fictícia)
+  processo_susep: 15414.000000/2026-02
+  tomador: Vértice Energia Renovável S.A. (fictícia) — CNPJ 00.000.000/0001-00
+  vigencia:
+    inicio: '2026-10-01'
+    fim: '2027-10-01'
+  limite_maximo_garantia: 30000000.0
+  franquia: 500000.0
+  premio_total: 268900.0
+  base_contratacao: reclamacao
+  data_retroatividade: '2020-10-01'
+  prazo_complementar: 180
+  prazo_suplementar: 360
+  ambito_geografico: mundial_exceto_eua_canada
+  cobertura_a: contratada
+  cobertura_b: contratada
+  cobertura_c: nao_contratada
+  penhora_online: contratada
+  sublimite_penhora_online: 1000000.0
+  multas_penalidades: nao_contratada
+  sublimite_multas: null
+  custos_investigacao: contratada
+  herdeiros_conjuges: contratada
+  dano_ambiental: nao_contratada
+  praticas_trabalhistas: contratada
+  gerenciamento_crise: nao_contratada
+  custos_extradicao: nao_contratada
+  adiantamento_custos_defesa: reembolso

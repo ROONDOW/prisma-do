@@ -67,7 +67,9 @@ def _classificar_linha(linha: str) -> _Titulo | None:
                 and sum(1 for p in palavras if p[:1].isupper()) >= max(1, len(palavras) // 2)):
             return _Titulo(numero=numero, titulo=resto, nivel=nivel)
         return None
-    if _eh_caixa_alta(s) and len(s) >= 8 and not s.endswith((".", ";", ",")):
+    # título em caixa alta pode terminar em vírgula quando quebra em várias linhas
+    # ("COBERTURA ADICIONAL PARA HERDEIROS, SUCESSORES, REPRESENTANTES LEGAIS, ESPÓLIO,")
+    if _eh_caixa_alta(s) and len(s) >= 8 and not s.endswith((".", ";")):
         primeira = s.split()[0].strip(":-–").upper()
         if primeira in PALAVRAS_TITULO:
             return _Titulo(numero=None, titulo=s, nivel=1)

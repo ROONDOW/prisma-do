@@ -1,0 +1,50 @@
+documento: argo_do.pdf
+ficticio: false
+fonte_do_gabarito: anotação manual lendo o PDF (2026-09-13); campos da especificação
+  não se aplicam a condições gerais
+campos:
+  seguradora:
+    aceita:
+    - argo
+    nota: ''
+  processo_susep: 15414.000906/2012-81
+  reintegracao_limite: sem_reintegracao
+  custos_defesa_no_limite: dentro_do_limite
+  base_contratacao: reclamacao_com_notificacao
+  prazo_complementar: 1080
+  prazo_suplementar:
+    aceita:
+    - 1080
+    - 360
+    nota: '5.2.2: 12, 24 ou 36 meses'
+  cobertura_a: basica
+  cobertura_b: nao_prevista
+  cobertura_c: nao_prevista
+  adiantamento_custos_defesa: adiantamento
+  livre_escolha_advogado: false
+  penhora_online: basica
+  multas_penalidades:
+    aceita:
+    - nao_prevista
+    - basica
+    nota: '3.1 E: só custos de defesa e depósito recursal em condenação a multa'
+  custos_investigacao: basica
+  herdeiros_conjuges: basica
+  dano_ambiental: basica
+  praticas_trabalhistas: basica
+  gerenciamento_crise: basica
+  custos_extradicao: nao_prevista
+  exclusao_dolo_gatilho:
+    aceita:
+    - decisao_nao_definitiva
+    - decisao_final
+    nota: 4.1.1 exclui ato 'alegadamente cometido'; 4.1.2 paga defesa até trânsito
+      em julgado
+  exclusao_insolvencia: nao_excluido
+  exclusao_danos_corporais_materiais: nao_excluido
+  exclusao_litigios_previos: excluido
+  exclusao_cibernetica: nao_excluido
+  exclusao_tributaria: nao_excluido
+  ambito_geografico: brasil
+  subrogacao_segurados: renuncia_salvo_dolo
+  menciona_lei_15040: false
