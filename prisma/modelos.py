@@ -41,7 +41,9 @@ class Documento(BaseModel):
     @property
     def rotulo(self) -> str:
         base = self.metadados.get("seguradora") or self.nome
-        return f"{base} [FICTÍCIO]" if self.ficticio else base
+        if self.ficticio and "fict" not in base.lower():
+            return f"{base} [FICTÍCIO]"
+        return base
 
     def texto_pagina(self, numero: int) -> str:
         for p in self.paginas:

@@ -331,7 +331,7 @@ def _exclusao_cg(doc, campo, clausulas) -> Optional[ValorCampo]:
     return None
 
 
-def extrair_deterministico(doc: Documento, clausulas: list[Clausula]) -> dict[str, ValorCampo]:
+def extrair_deterministico(doc: Documento, clausulas: list[Clausula], verificar: bool = True) -> dict[str, ValorCampo]:
     espec = eh_especificacao(doc)
     linhas = _linhas(doc)
     saida: dict[str, ValorCampo] = {}
@@ -345,7 +345,10 @@ def extrair_deterministico(doc: Documento, clausulas: list[Clausula]) -> dict[st
         except re.error as erro:  # regra mal escrita no YAML não derruba a extração inteira
             v = None
             print(f"[extrator] regra inválida para {campo.id}: {erro}")
-        saida[campo.id] = verificador.verificar(doc, campo, v) if v else ValorCampo(campo_id=campo.id)
+        if v is None:
+            saida[campo.id] = ValorCampo(campo_id=campo.id)
+        else:
+            saida[campo.id] = verificador.verificar(doc, campo, v) if verificar else v
     return saida
 
 
@@ -445,7 +448,7 @@ aparece só como cláusula específica/particular de exclusão; se não houver e
 
 
 def extrair_llm(doc: Documento, clausulas: list[Clausula], cascata: Cascata,
-                max_chars: int = 11000) -> dict[str, ValorCampo]:
+                max_chars: int = 11000, verificar: bool = True) -> dict[str, ValorCampo]:
     esq = carregar_esquema()
     espec = eh_especificacao(doc)
     aplicaveis = {c.id for c in campos_aplicaveis(doc)}
@@ -498,12 +501,19 @@ def extrair_llm(doc: Documento, clausulas: list[Clausula], cascata: Cascata,
                 saida[campo.id] = ValorCampo(campo_id=campo.id, metodo=metodo)
                 continue
             v = _valor(campo.id, valor, texto_valor, trecho, pagina, metodo=metodo)
-            saida[campo.id] = verificador.verificar(doc, campo, v)
+            saida[campo.id] = verificador.verificar(doc, campo, v) if verificar else v
     for campo in esq.campos:
         if campo.id not in saida:
             status = StatusEvidencia.NA_ESPECIFICACAO if (not espec and campo.onde == "espec") else StatusEvidencia.NAO_LOCALIZADO
             saida[campo.id] = ValorCampo(campo_id=campo.id, status=status)
     return saida
+
+
+def verificar_todos(doc: Documento, valores: dict[str, ValorCampo]) -> dict[str, ValorCampo]:
+    """Passa cada valor bruto pelo Verificador (nó próprio no grafo)."""
+    esq = carregar_esquema()
+    return {cid: (verificador.verificar(doc, esq.campo(cid), v) if v.evidencia is not None else v)
+            for cid, v in valores.items()}
 
 
 def fundir(llm: dict[str, ValorCampo], det: dict[str, ValorCampo]) -> dict[str, ValorCampo]:

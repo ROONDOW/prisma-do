@@ -31,7 +31,10 @@ def _motor_ocr():
         from rapidocr import RapidOCR
 
         logging.getLogger("RapidOCR").setLevel(logging.WARNING)
-        _OCR = RapidOCR(params={"Global.log_level": "warning"})
+        # Lei do Classificador de Orientação: o classificador de 180° do RapidOCR gira linhas
+        # justificadas de apólice e devolve lixo ("ouens o eu od o ep") — CER de 21% numa página da
+        # Berkley. Página de apólice não tem texto invertido: desligado, o CER cai para ~0,04%.
+        _OCR = RapidOCR(params={"Global.log_level": "warning", "Global.use_cls": False})
     return _OCR
 
 
@@ -151,6 +154,40 @@ def cer(referencia: str, hipotese: str) -> float:
             atual[j] = min(anterior[j] + 1, atual[j - 1] + 1, anterior[j - 1] + (cr != ch))
         anterior = atual
     return anterior[-1] / len(ref)
+
+
+def cer_por_linha(referencia: str, hipotese: str, tamanho_minimo: int = 15) -> float:
+    """CER independente de layout. A camada de texto de um PDF lista tabelas coluna a coluna e o
+    OCR lê linha a linha; o CER da página inteira pune essa diferença de ORDEM como erro de leitura.
+    Aqui cada linha de referência (>= `tamanho_minimo` caracteres) é pareada com a linha mais
+    parecida do OCR e mede-se a distância de edição dela; linha sem par razoável conta como erro
+    total. Texto que só o OCR vê (logotipo em imagem) não entra na conta."""
+    from difflib import SequenceMatcher
+
+    def limpar(s: str) -> list[str]:
+        return [re.sub(r"\s+", " ", l).strip() for l in s.splitlines() if len(re.sub(r"\s+", " ", l).strip()) >= tamanho_minimo]
+
+    refs, hips = limpar(referencia), [re.sub(r"\s+", " ", l).strip() for l in hipotese.splitlines() if l.strip()]
+    if not refs:
+        return 0.0
+    # janelas de 1 e 2 linhas do OCR (linhas vizinhas às vezes se fundem ou se partem)
+    candidatas = hips + [f"{a} {b}" for a, b in zip(hips, hips[1:])]
+    erros = total = 0
+    for r in refs:
+        # par = a linha do OCR com o maior alinhamento de caracteres com a referência (não o
+        # "saco de letras": "R$ 1.000.000,00" não pode parear com "R$ 30.000.000,00")
+        melhor = max(candidatas, key=lambda h: sum(b.size for b in SequenceMatcher(None, r, h, autojunk=False)
+                                                   .get_matching_blocks()) - 0.01 * abs(len(h) - len(r)), default="")
+        # recorta da candidata o trecho mais alinhado com a referência antes de medir
+        sm = SequenceMatcher(None, melhor, r, autojunk=False)
+        blocos = [b for b in sm.get_matching_blocks() if b.size]
+        if not blocos or sum(b.size for b in blocos) < 0.5 * len(r):
+            erros += len(r)
+        else:
+            ini, fim = blocos[0].a, blocos[-1].a + blocos[-1].size
+            erros += round(cer(r, melhor[ini:fim]) * len(r))
+        total += len(r)
+    return erros / total
 
 
 def imagem_para_png(conteudo: bytes) -> bytes:
