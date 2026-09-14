@@ -1,3 +1,24 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-escuro.png">
+    <img src="assets/banner-claro.png" alt="PRISMA D&O — compare apólices D&O e veja a página de onde saiu cada número" width="100%">
+  </picture>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12-22304f?style=flat-square&labelColor=141c2e&logo=python&logoColor=d8b877" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/LangGraph-9_agentes-22304f?style=flat-square&labelColor=141c2e" alt="LangGraph com 9 agentes">
+  <img src="https://img.shields.io/badge/LLM-tier_gratuito-22304f?style=flat-square&labelColor=141c2e" alt="LLM em tier gratuito">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licen%C3%A7a-MIT-d8b877?style=flat-square&labelColor=141c2e" alt="Licença MIT"></a>
+</p>
+
+<p align="center">
+  <a href="#instalação">Instalação</a> ·
+  <a href="#execução">Execução</a> ·
+  <a href="#resultados-medidos">Resultados medidos</a> ·
+  <a href="#entregáveis">Entregáveis</a>
+</p>
+
 # PRISMA D&O — análise e comparação de apólices D&O com evidência verificada
 
 **Projeto Final do InsurMinds (I2A2).** Plataforma que lê apólices de seguro D&O (Responsabilidade Civil
@@ -12,6 +33,14 @@ relatório comparativo em PDF.
 
 **O princípio que guia tudo:** nenhum valor aparece na tela sem um trecho que exista na página citada.
 O LLM lê e redige; o código confere, normaliza, compara e decide.
+
+<p align="center">
+  <img src="Projeto_Final_Artefatos/telas/03_ficha_evidencia.png" alt="Ficha de evidência do PRISMA D&O mostrando o Limite Máximo de Garantia conferido na página 1" width="880">
+  <br>
+  <sub>Ficha de uma apólice <b>fictícia</b> da demonstração: o Limite Máximo de Garantia de R$ 50.000.000,00 aparece
+  <b>conferido</b>, e o botão Evidência abre a <b>página 1</b> com o trecho que confere 100% com o documento.
+  Números com documentos reais em <a href="#resultados-medidos">Resultados medidos</a>.</sub>
+</p>
 
 ---
 

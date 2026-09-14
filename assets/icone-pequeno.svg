@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" role="img" aria-label="PRISMA D&amp;O">
+  <!-- versão para 16 e 32 px: sem raios finos, só o prisma e um feixe de saída -->
+  <rect width="16" height="16" rx="3.5" fill="#141c2e"/>
+  <path d="M7 3 L12.2 12.5 L1.8 12.5 Z" fill="#22304f" stroke="#d8b877" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M10.6 8.6 L15 7" stroke="#f2f5fa" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

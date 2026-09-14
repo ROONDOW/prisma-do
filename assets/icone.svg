@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PRISMA D&amp;O">
+  <rect width="64" height="64" rx="14" fill="#141c2e"/>
+  <!-- raio único entra: o documento -->
+  <path d="M6 37 L25 33" stroke="#f2f5fa" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- o prisma: onde o texto é conferido -->
+  <path d="M32 12 L50 46 L14 46 Z" fill="#22304f" stroke="#d8b877" stroke-width="3.6" stroke-linejoin="round"/>
+  <!-- três raios saem: os campos verificados -->
+  <path d="M41 30 L58 22" stroke="#d8b877" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M43 34 L58 34" stroke="#e6cf9c" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M41 38 L58 46" stroke="#f2f5fa" stroke-width="3.2" stroke-linecap="round"/>
+</svg>
