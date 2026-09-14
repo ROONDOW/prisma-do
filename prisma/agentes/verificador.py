@@ -90,6 +90,8 @@ def _numero_confere(campo: CampoDef, valor, trecho: str) -> bool:
             return normalizar.data(trecho) == "ilimitada"
         return valor in normalizar.datas(trecho) or normalizar.data(trecho) == valor
     if campo.tipo == "duracao":
+        if valor == "conforme_especificacao":
+            return "especifica" in normalizar.texto_busca(trecho)
         return valor is not None and normalizar.duracao_dias(trecho) == int(valor)
     if campo.tipo == "periodo":
         ds = normalizar.datas(trecho)

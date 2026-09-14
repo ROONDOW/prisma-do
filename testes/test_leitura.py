@@ -60,7 +60,8 @@ def test_remove_cabecalho_e_rodape_repetidos():
                                       f"{corpo(i)}\nPágina {i} de 6")
                for i in range(1, 7)]
     limpas = leitor.remover_cabecalhos_rodapes(paginas)
-    for p in limpas:
+    assert "Processo SUSEP" in limpas[0].texto  # a 1ª página preserva o cabeçalho (metadados)
+    for p in limpas[1:]:
         assert "SEGURADORA X" not in p.texto
         assert "Processo SUSEP" not in p.texto
         assert "Página" not in p.texto

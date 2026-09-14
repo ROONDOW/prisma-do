@@ -122,6 +122,9 @@ def _uma_passada(paginas: list[Pagina], fracao_minima: float) -> list[Pagina]:
     repetidas = {k for k, n in contagem.items() if n >= limite and k != "#"}
     limpas = []
     for p in paginas:
+        if p.numero == 1:  # a 1ª página guarda o cabeçalho: é onde mora o Processo SUSEP
+            limpas.append(p)
+            continue
         linhas = p.texto.splitlines()
         nao_vazias = [i for i, l in enumerate(linhas) if l.strip()]
         bordas = set(nao_vazias[:6] + nao_vazias[-4:])

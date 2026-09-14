@@ -148,6 +148,7 @@ class CampoDef(BaseModel):
     rotulos_espec: list[str] = Field(default_factory=list)
     valores: dict[str, str] = Field(default_factory=dict)
     padrao: Optional[str] = None
+    linha_tabela: Optional[str] = None  # linha do quadro de coberturas que traz o valor
     instrucao: str = ""
 
 

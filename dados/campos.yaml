@@ -101,6 +101,7 @@ campos:
     onde: espec
     pistas: [penhora online, bloqueio de bens, sublimite]
     rotulos_espec: ["Penhora Online e Bloqueio de Bens", "Penhora Online"]
+    linha_tabela: "penhora online"
     instrucao: Sublimite em reais para a extensão de penhora online/bloqueio de bens.
 
   - id: sublimite_multas
@@ -110,6 +111,7 @@ campos:
     onde: espec
     pistas: [multas, penalidades, sublimite]
     rotulos_espec: ["Multas e Penalidades"]
+    linha_tabela: "multas e penalidades"
     instrucao: Sublimite em reais para a cobertura de multas e penalidades.
 
   - id: premio_total
@@ -181,7 +183,7 @@ campos:
     rotulo: Prazo suplementar / adicional oneroso
     tipo: duracao
     onde: ambos
-    pistas: [prazo suplementar, prêmio adicional, "mediante pagamento"]
+    pistas: [prazo suplementar, prêmio adicional, "mediante pagamento", novo prazo adicional]
     rotulos_espec: ["Prazo Suplementar"]
     instrucao: Duração máxima do prazo suplementar (prazo adicional contratado mediante prêmio adicional). Informe meses/dias ou "conforme especificação".
 
@@ -191,7 +193,7 @@ campos:
     rotulo: Cobertura A — pagamento em nome dos segurados (pessoas físicas)
     tipo: cobertura
     onde: ambos
-    pistas: [cobertura A, garantia A, "em nome do segurado", side A, pessoas físicas, "pagamento direto"]
+    pistas: [cobertura A, garantia A, "em nome do segurado", side A, pessoas físicas, "pagamento direto", garantias básicas, indenização securitária ao segurado]
     instrucao: Existe cobertura que paga ou reembolsa diretamente as perdas dos segurados pessoas físicas (Side/Cobertura A)?
 
   - id: cobertura_b
@@ -199,7 +201,7 @@ campos:
     rotulo: Cobertura B — reembolso ao tomador
     tipo: cobertura
     onde: ambos
-    pistas: [cobertura B, garantia B, reembolso ao tomador, "tenha adiantado", side B, indenizar o segurado]
+    pistas: [cobertura B, garantia B, reembolso ao tomador, "tenha adiantado", side B, indenizar o segurado, garantias básicas]
     instrucao: Existe cobertura que reembolsa o tomador (empresa) quando ele adianta ou indeniza as perdas dos segurados (Side/Cobertura B)?
 
   - id: cobertura_c
@@ -274,7 +276,7 @@ campos:
     rotulo: Práticas trabalhistas indevidas
     tipo: cobertura
     onde: ambos
-    pistas: [práticas trabalhistas, trabalhista, assédio, discriminação, empregados]
+    pistas: [práticas trabalhistas, trabalhista, trabalhistas, assédio, discriminação, empregados]
     instrucao: Há cobertura para reclamações por práticas trabalhistas indevidas ou responsabilidade trabalhista do administrador?
 
   - id: gerenciamento_crise
@@ -282,7 +284,7 @@ campos:
     rotulo: Gerenciamento de crise / publicidade
     tipo: cobertura
     onde: ambos
-    pistas: [crise, publicidade, gerenciamento de crise, relações públicas, reputação]
+    pistas: [crise, publicidade, gerenciamento de crise, relações públicas, reputação, assessoria de imprensa, imagem]
     instrucao: Há cobertura para despesas de publicidade, relações públicas ou gerenciamento de crise?
 
   - id: custos_extradicao
@@ -303,7 +305,7 @@ campos:
       decisao_final: "só após decisão final/transitada em julgado, arbitral definitiva ou confissão"
       decisao_nao_definitiva: "basta decisão judicial/administrativa ainda recorrível, ou a alegação"
       sem_gatilho: "exclui ato doloso sem definir o momento de aplicação"
-    pistas: [dolo, doloso, culpa grave, transitada em julgado, decisão final, fraude]
+    pistas: [dolo, doloso, culpa grave, transitada em julgado, decisão final, fraude, exclusões previstas, confissão]
     instrucao: A exclusão por ato doloso/fraude só se aplica depois de decisão final (transitada em julgado, arbitral definitiva ou confissão), ou antes disso?
 
   - id: exclusao_insolvencia
@@ -327,7 +329,7 @@ campos:
     rotulo: Exclusão de reclamações/fatos anteriores
     tipo: exclusao
     onde: cg
-    pistas: [anteriormente, fatos conhecidos, litígios pendentes, reclamação anterior, notificados em apólice anterior]
+    pistas: [anteriormente, fatos conhecidos, litígios pendentes, reclamação anterior, notificados em apólice anterior, antes da data de início]
     instrucao: Há exclusão de reclamações, litígios ou fatos anteriores/já conhecidos antes da vigência?
 
   - id: exclusao_cibernetica
@@ -335,7 +337,7 @@ campos:
     rotulo: Exclusão de riscos cibernéticos
     tipo: exclusao
     onde: cg
-    pistas: [cibernético, ataque cibernético, dados, sistemas de informática, cyber]
+    pistas: [cibernético, ataque cibernético, dados, sistemas de informática, cyber, vírus, piratas eletrônicos]
     instrucao: Há exclusão de riscos cibernéticos (ataques, vazamento de dados, falhas de sistemas)?
 
   - id: exclusao_tributaria
@@ -356,7 +358,7 @@ campos:
       brasil: "somente território brasileiro"
       mundial: "mundial / qualquer país"
       mundial_exceto_eua_canada: "mundial, exceto EUA e/ou Canadá"
-    pistas: [âmbito geográfico, território brasileiro, mundial, Estados Unidos, Canadá]
+    pistas: [âmbito geográfico, território brasileiro, mundial, qualquer parte do mundo, Estados Unidos, Canadá]
     rotulos_espec: ["Âmbito Geográfico", "Âmbito Territorial"]
     instrucao: Qual é o âmbito geográfico da cobertura?
 
@@ -368,7 +370,7 @@ campos:
     valores:
       renuncia_salvo_dolo: "seguradora renuncia à sub-rogação contra segurados, salvo dolo/fraude"
       sem_renuncia: "seguradora preserva a sub-rogação/regresso contra segurados de forma ampla"
-    pistas: [sub-rogação, regresso, ressarcimento, "direito de regresso"]
+    pistas: [sub-rogação, sub-rogada, regresso, ressarcimento, "direito de regresso"]
     instrucao: A seguradora renuncia ao direito de sub-rogação/regresso contra os segurados (exceto em dolo/fraude), ou preserva esse direito de forma ampla?
 
   - id: menciona_lei_15040

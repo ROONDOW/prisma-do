@@ -1,0 +1,107 @@
+# Regras do extrator SEM LLM (modo que roda sem nenhuma chave).
+#
+# As expressões são aplicadas sobre texto normalizado (sem acento, minúsculo, espaços colapsados),
+# numa janela de 3 linhas. A primeira regra que casar decide o valor; as linhas originais que
+# casaram viram o trecho de evidência, que passa pelo Verificador como qualquer outro.
+#
+#   escopo_titulo: só procura dentro de cláusulas cujo título casa esta expressão (opcional)
+#   regras:        lista ordenada de {valor, regex}
+#
+# Coberturas usam títulos de cláusula (ver `coberturas`); exclusões usam as cláusulas de exclusão
+# (ver `exclusoes`). Ausência NÃO gera valor: vira "não localizado" (Lei do Não Localizado Honesto).
+
+enums:
+  reintegracao_limite:
+    regras:
+      - {valor: sem_reintegracao, regex: "nao (ha|havera)[^.]{0,60}reintegracao"}
+      - {valor: com_reintegracao, regex: "reintegracao (automatica|mediante)"}
+  custos_defesa_no_limite:
+    regras:
+      - {valor: dentro_do_limite, regex: "custos de defesa que ultrapassarem o limite|nao indenizara os custos de defesa que ultrapassarem"}
+      - {valor: adicional_ao_limite, regex: "custos de defesa (serao pagos )?(em adicional|alem) (ao|do) limite"}
+  base_contratacao:
+    regras:
+      - {valor: reclamacao_com_notificacao, regex: "(contratad[oa]|e) (por meio de uma |a |à )?(apolice )?(a |à )?base de reclamac(ao|oes) com notificac|seguro a base de reclamacoes com notificac|contratada a base de reclamacoes \\(claims made\\) - com notificacao|base de contratacao: a base de reclamacoes com notificacao"}
+      - {valor: primeira_manifestacao, regex: "base de contratacao: .{0,40}primeira manifestacao"}
+      - {valor: reclamacao, regex: "base de contratacao: a base de reclamacoes \\(claims made\\)"}
+      - {valor: ocorrencia, regex: "base de contratacao: a base de ocorrencia"}
+  adiantamento_custos_defesa:
+    regras:
+      # a regra geral vem antes: "cláusula particular de suspensão de adiantamento" é opcional
+      - {valor: adiantamento, regex: "adiantara os custos de defesa|custos de defesa serao adiantados|custos de defesa (serao feitos|podera se dar)[^.]{0,60}(na medida|antecipada)|pagamentos dos custos de defesa[^.]{0,60}a medida que"}
+      - {valor: reembolso, regex: "custos de defesa serao reembolsados apos"}
+  exclusao_dolo_gatilho:
+    escopo_titulo: "exclus|riscos excluidos"
+    regras:
+      - {valor: decisao_final, regex: "(exclusao|exclusoes)[^.]{0,120}somente (aplicar-se-a|serao aplicadas)[^.]{0,160}(transitada em julgado|arbitral final|irrecorrivel)"}
+      - {valor: decisao_nao_definitiva, regex: "somente (aplicar-se-a|serao aplicadas) mediante decisao judicial"}
+      - {valor: decisao_nao_definitiva, regex: "dolosos cometidos ou alegadamente cometidos"}
+  ambito_geografico:
+    regras:
+      - {valor: mundial_exceto_eua_canada, regex: "(qualquer parte do mundo|mundial)[^.]{0,40}(com excecao a|exceto (nos )?)estados unidos"}
+      - {valor: mundial, regex: "reclamacoes feitas em qualquer parte do mundo|ambito geografico: mundial"}
+      - {valor: brasil, regex: "domiciliada\\(s\\) em territorio brasileiro|ambito geografico: territorio brasileiro"}
+  subrogacao_segurados:
+    regras:
+      - {valor: renuncia_salvo_dolo, regex: "nao devera exercer seus direitos de sub-rogacao contra os segurados"}
+      - {valor: sem_renuncia, regex: "(ficara|ficando) sub-rogada"}
+
+booleanos:
+  livre_escolha_advogado:
+    - {valor: true, regex: "serao de sua livre escolha|escolhera livremente o advogado|podem escolher livremente|serao escolhidos pelo\\(s\\) segurado"}
+  menciona_lei_15040:
+    - {valor: true, regex: "lei (de seguros )?(n[o°]? ?)?15\\.040"}
+
+duracoes:
+  prazo_complementar:
+    regras:
+      - {valor: conforme_especificacao, regex: "prazo adicional para a apresentacao de reclamacoes por terceiros, com ou sem cobranca de premio, conforme vier descrito na especificacao"}
+      - {extrair: true, regex: "(prazo complementar|prazo adicional)[^.]{0,120}(sem cobranca de premio|sem qualquer onus|sem onus)[^.]{0,80}\\d{1,3} \\([a-z ]+\\) meses"}
+      - {extrair: true, regex: "sem qualquer onus, um prazo adicional[^.]{0,80}\\d{1,3} \\([a-z ]+\\) meses"}
+      - {extrair: true, regex: "sem cobranca de premio adicional, a um prazo (complementar|adicional)[^.]{0,80}\\d{1,3} \\([a-z ]+\\) meses"}
+      - {extrair: true, regex: "prazo complementar: \\d{1,3} \\([a-z ]+\\) meses"}
+  prazo_suplementar:
+    regras:
+      - {valor: conforme_especificacao, regex: "prazo suplementar, conforme descrito nas especificacoes da apolice"}
+      - {extrair: true, regex: "prazo suplementar[^.]{0,40}(de|ate) \\d{1,3} \\([a-z ]+\\)[^.]{0,60}meses|novo prazo adicional[^.]{0,20}mais \\d{1,3} \\([a-z ]+\\) meses|prazo suplementar: ate \\d{1,3} \\([a-z ]+\\) meses"}
+
+coberturas:
+  # títulos (normalizados) que indicam a cobertura; em especificação usa a linha do quadro
+  cobertura_a: {titulo: "^cobertura [\"“]?a[\"”]?( |$|-|–)|^cobertura a$", linha_espec: "cobertura a"}
+  cobertura_b: {titulo: "^cobertura [\"“]?b[\"”]?( |$|-|–)|^cobertura b$", linha_espec: "cobertura b"}
+  cobertura_c: {titulo: "mercado (aberto )?de capitais", linha_espec: "cobertura c"}
+  penhora_online: {titulo: "penhora|bloqueio de bens|indisponibilidade de bens", linha_espec: "penhora online"}
+  multas_penalidades: {titulo: "multas", linha_espec: "multas e penalidades"}
+  custos_investigacao: {titulo: "custos de investigacao", linha_espec: "custos de investigacao"}
+  herdeiros_conjuges: {titulo: "herdeiros", linha_espec: "herdeiros"}
+  dano_ambiental: {titulo: "ambiental", linha_espec: "dano ambiental"}
+  praticas_trabalhistas: {titulo: "trabalhist", linha_espec: "praticas trabalhistas"}
+  gerenciamento_crise: {titulo: "crise|publicidade", linha_espec: "gerenciamento de crise"}
+  custos_extradicao: {titulo: "extradicao", linha_espec: "extradicao"}
+  # frases que, dentro da cláusula de riscos cobertos/eventos indenizáveis, indicam cobertura BÁSICA
+  # (produtos "tudo incluído" listam as coberturas como itens A, B, C... em vez de títulos)
+  escopo_basico: "eventos indenizaveis|riscos cobertos"
+  texto_basico:
+    cobertura_a: "garante o pagamento de indenizacao securitaria ao segurado"
+    penhora_online: "indisponibilidade ou bloqueio de bens pessoais"
+    custos_investigacao: "acao ou investigacao movida contra o segurado"
+    herdeiros_conjuges: "prejuizos sofridos pelo conjuge"
+    dano_ambiental: "danos ou prejuizos ambientais"
+    praticas_trabalhistas: "obrigacoes tributarias e trabalhistas"
+    gerenciamento_crise: "assessoria de imprensa"
+  # título que torna a cobertura "adicional" (depende de contratação)
+  marcador_adicional: "cobertura adicional|clausula particular|clausula especifica|extensao"
+  # exclusão geral que torna a cobertura "excluida" quando não há título que a ofereça
+  exclusao_geral:
+    dano_ambiental: "danos ambientais"
+
+exclusoes:
+  escopo_titulo: "exclusoes|riscos excluidos"
+  titulo_opcional: "clausula (especifica|particular) de exclusao"
+  ressalva: "\\bsalvo\\b|\\bexceto\\b"
+  temas:
+    exclusao_insolvencia: "insolvencia"
+    exclusao_danos_corporais_materiais: "danos corporais|danos a propriedade"
+    exclusao_litigios_previos: "anteriormente (apresentada|ao inicio|a contratacao)|iniciado antes da data de inicio|reclamados contra o segurado anteriormente"
+    exclusao_cibernetica: "virus|cibernetic|piratas eletronicos"
+    exclusao_tributaria: "reclamacoes tributarias|tributos, impostos"
