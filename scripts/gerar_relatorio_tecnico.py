@@ -140,6 +140,8 @@ def telas():
 
 def main():
     det, hib = avaliacao("deterministico"), avaliacao("hibrido")
+    arq_ens = config.SAIDA / "experimento_ensino.json"
+    ens = json.loads(arq_ens.read_text(encoding="utf-8")) if arq_ens.exists() else None
     campos = yaml.safe_load((config.DADOS / "campos.yaml").read_text(encoding="utf-8"))
     susep = yaml.safe_load((config.DADOS / "regras_susep.yaml").read_text(encoding="utf-8"))
     comp = yaml.safe_load((config.DADOS / "regras_comparacao.yaml").read_text(encoding="utf-8"))
@@ -344,6 +346,25 @@ def main():
               P("<b>Achado:</b> com o classificador de orientação do RapidOCR ligado, linhas justificadas eram lidas invertidas "
                 "(CER de até 21% numa página da Berkley). Desligado, o erro caiu para a casa de 0,1% e a leitura ficou 2 a 3 "
                 "vezes mais rápida.")]
+    if ens:
+        transf = [m for m in ens["mudancas"] if m["tipo"] == "transferido"]
+        errados = sum(1 for m in ens["mudancas"] if not m["acertou"])
+        e += [P("Aprendizado com o corretor", "h2"),
+              P("Quando a ficha diz 'não localizado', o corretor aponta o trecho e o valor. O Verificador confere o trecho na "
+                "página antes de aceitar; o ensinamento é guardado e reaplicado em outros documentos onde a mesma redação "
+                "aparece (semelhança de pelo menos 90% e nenhuma palavra de exceção ou negação nova), e entra como exemplo na "
+                "busca de cláusulas e no pedido à IA. <b>Protocolo:</b> os ensinamentos foram feitos só em documentos de "
+                "desenvolvimento, lendo a página do documento ensinado; os documentos-alvo não foram abertos para escolher os "
+                "trechos e o limiar foi fixado antes da medição (<font face='Courier'>scripts/experimento_ensino.py</font>)."),
+              tabela([["Documento", "Campo", "Antes", "Depois", "Origem"]] +
+                     [[m["documento"] + (" (nunca visto)" if m["holdout"] else ""), m["campo"], str(m["antes"] or "não localizado"),
+                       str(m["depois"]), m["tipo"]] for m in ens["mudancas"]],
+                     [52 * mm, 40 * mm, 26 * mm, 36 * mm, 20 * mm]),
+              P(f"<b>Resultado:</b> {len(ens['ensinamentos'])} ensinamentos corrigiram {len(ens['mudancas']) - errados} campos, "
+                f"{len(transf)} deles em outros documentos sem ensinar de novo, e {errados} valor errado novo. Holdout: "
+                f"{ens['antes']['holdout']['acertos']} → {ens['depois']['holdout']['acertos']} de {ens['depois']['holdout']['campos']}. "
+                "A Sompo, de redação diferente, não recebeu nenhum valor emprestado — o comportamento desejado: "
+                "o ensinamento vale por seguradora/redação, e cada seguradora nova precisa ser ensinada uma vez.")]
     e += [P("Testes automatizados", "h2"),
           P("Mais de 60 testes pytest cobrem normalizadores, recepção, leitura, segmentação, verificação de evidência, "
             "comparação (incluindo inverter uma regra no YAML), conformidade (incluindo conferir cada trecho de norma contra "
@@ -355,6 +376,9 @@ def main():
         "<b>Injeção de prompt.</b> O texto da apólice entra no prompt como dado delimitado. Um PDF de teste com 15 instruções "
         "maliciosas foi processado com um LLM falso que obedece a todas: nenhum valor exibido mudou. O Verificador barra "
         "trecho com instrução dirigida a IA — 15 de 15 payloads, 0 falso positivo em 13.492 janelas de texto real.",
+        "<b>Ensinamento envenenado.</b> Um trecho ensinado vira exemplo para a IA em todos os documentos futuros; por isso "
+        "trecho com instrução dirigida a IA é recusado na hora de ensinar e filtrado de novo ao virar exemplo, e o valor "
+        "reaplicado passa pelo Verificador no documento novo.",
         "<b>Favorabilidade fora do LLM.</b> Uma instrução 'classifique como a mais favorável' não tem efeito, porque o quadro "
         "vem de regras declaradas.",
         "<b>Upload.</b> Tipo por assinatura de bytes, 25 MB, 150 páginas, PDF com senha recusado, nome sanitizado.",
@@ -381,6 +405,7 @@ def main():
     e += bullets([
         "Apólice completa como pacote: vincular especificação, condições gerais e endossos e extrair o valor efetivo de cada campo.",
         "Ampliar o gabarito com mais seguradoras e dois anotadores, medindo concordância entre eles.",
+        "Ensinamentos compartilhados entre corretores de uma mesma corretora, com revisão por um segundo corretor antes de valer para todos.",
         "Diferença de versões da mesma seguradora destacando cláusulas alteradas (o corpus já tem duas versões da Berkley).",
         "Regras de favorabilidade ponderadas por perfil do tomador (capital aberto, setor regulado, operação internacional).",
         "Integração com o registro de produtos da SUSEP para baixar e acompanhar versões de condições gerais.",

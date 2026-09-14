@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 import pandas as pd
 import streamlit as st
 
-from prisma import config, corpus, grafo, llm
+from prisma import config, corpus, ensino, grafo, llm
 from prisma.agentes import consultor, recepcionista
 from prisma.armazem import Armazem
 from prisma.modelos import Favorabilidade, StatusEvidencia, carregar_esquema
@@ -52,6 +52,8 @@ CSS = """
 [data-testid="stSidebar"] .stButton button { background: var(--dourado); color: var(--marinho); border: 0; font-weight: 600; }
 [data-testid="stSidebar"] .stButton button * { color: var(--marinho); }
 [data-testid="stSidebar"] [data-testid="stAlert"] { background: rgba(255,255,255,.07); }
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:not([data-selected="true"]) > div:not([data-testid]) { background-color: #5b6477 !important; }
+[data-testid="InputInstructions"] { display: none; }
 .marca { font-size: 1.55rem; font-weight: 700; letter-spacing: .5px; margin: 0 0 .2rem 0; }
 .marca span { color: var(--dourado) !important; }
 .lema { font-size: .86rem; opacity: .8; margin-bottom: 1rem; }
@@ -267,6 +269,9 @@ with tab_docs:
 def seletor_documentos(chave: str, multiplo: bool, rotulo: str):
     docs = armazem().documentos()
     opcoes = {d["id"]: armazem().documento(d["id"]).rotulo for d in docs}
+    repetidos = {r for r in opcoes.values() if list(opcoes.values()).count(r) > 1}
+    nomes = {d["id"]: d["nome"] for d in docs}
+    opcoes = {i: (f"{r} · {nomes[i]}" if r in repetidos else r) for i, r in opcoes.items()}  # duas versões da mesma seguradora
     if not opcoes:
         st.info("Nenhum documento processado ainda: comece pela aba 1 · Documentos.")
         return [] if multiplo else None
@@ -279,8 +284,54 @@ def seletor_documentos(chave: str, multiplo: bool, rotulo: str):
     return st.selectbox(rotulo, ordem, format_func=lambda i: opcoes[i], key=chave)
 
 
+def origem_do_valor(metodo: str) -> str:
+    if metodo == "humano":
+        return "ensinado pelo corretor"
+    if metodo.startswith("aprendido:"):
+        return f"aprendido com {metodo.split(':', 1)[1]}"
+    return "regras declaradas" if metodo == "deterministico" else modo_legivel(metodo).split(",")[0]
+
+
+def formulario_ensinar(doc, ficha, campo, chave: str, titulo: str):
+    """O corretor aponta trecho e valor; o Verificador confere antes de guardar o ensinamento."""
+    st.markdown(f"**{titulo}**")
+    st.caption("Procure a cláusula, copie o trecho exatamente como está e escolha o valor. "
+               "O sistema confere o trecho na página antes de aceitar, e reaplica o ensinamento em outros "
+               "documentos com a mesma redação.")
+    busca = st.text_input("Procurar no documento", key=f"busca_{chave}", placeholder="ex.: regresso, âmbito, custos de defesa")
+    if busca:
+        achados = armazem().buscar_texto(busca, [doc.id], limite=4)
+        for r in achados:
+            st.caption(f"p. {r['pagina']}: {seguro(r['trecho'])}")
+        if not achados:
+            st.caption("Nada encontrado com essas palavras.")
+    esq = carregar_esquema()
+    with st.form(f"form_{chave}", border=False):
+        pagina = st.number_input("Página", min_value=1, max_value=max(1, len(doc.paginas)), value=1, step=1)
+        trecho = st.text_area("Trecho exato", height=90, max_chars=600)
+        validos = {k: rotulo for k, rotulo in esq.valores_validos(campo).items() if k not in ("nao_prevista", "nao_excluido")}
+        if campo.tipo == "booleano":
+            valor = st.radio("Valor", [True, False], format_func=lambda b: "Sim" if b else "Não", horizontal=True)
+        elif validos:
+            valor = st.selectbox("Valor", list(validos), format_func=lambda k: f"{CURTO.get(k, k)} — {validos[k]}")
+        else:
+            exemplo = {"dinheiro": "R$ 5.000.000,00", "data": "01/01/2020 ou ilimitada", "duracao": "12 meses",
+                       "periodo": "01/01/2026 a 01/01/2027"}.get(campo.tipo, "")
+            valor = st.text_input("Valor", placeholder=exemplo)
+        if st.form_submit_button("🎓 Ensinar", type="primary"):
+            try:
+                novo, licao = ensino.ensinar(doc, campo.id, valor, trecho, int(pagina))
+            except ensino.EnsinamentoRecusado as erro:
+                st.error(f"Não aceito: {erro}")
+            else:
+                armazem().salvar_ensinamento(licao)
+                armazem().salvar_ficha(ficha.model_copy(update={"valores": {**ficha.valores, campo.id: novo}}))
+                st.session_state["aviso_ensino"] = f"Aprendido: {campo.rotulo} = {novo.valor_texto or novo.valor} (p. {novo.evidencia.pagina})."
+                st.rerun()
+
+
 def mostrar_evidencia(doc, v, chave: str):
-    origem = "regras declaradas" if v.metodo == "deterministico" else modo_legivel(v.metodo).split(",")[0]
+    origem = origem_do_valor(v.metodo)
     st.markdown(f"**Página {v.evidencia.pagina}** · trecho confere {100 * v.evidencia.similaridade:.0f}% com o "
                 f"documento · lido por {seguro(origem)}")
     st.text(v.evidencia.trecho)
@@ -315,8 +366,10 @@ with tab_ficha:
             if cont["definido_na_especificacao"]:
                 html_bloco('<div class="nota">📄 Este é um <b>contrato-modelo</b> (condição geral). Limite, franquia, prêmio e '
                            'datas ficam na <b>especificação</b> de cada cliente — por isso aparecem como “fica na especificação”.</div>')
-            st.caption("✅ conferido: valor com trecho e página · ⛔ descartado: sem prova, não exibido · "
-                       "— não encontrado: o documento não trata do assunto")
+            st.caption("✅ conferido: valor com trecho e página · 🎓 ensinado/aprendido: veio de um corretor · "
+                       "⛔ descartado: sem prova, não exibido · — não encontrado: clique em Ensinar se o documento trata do assunto")
+            if st.session_state.get("aviso_ensino"):
+                st.success(st.session_state.pop("aviso_ensino"))
             esq = carregar_esquema()
             for grupo_id, grupo_nome in esq.grupos.items():
                 with st.expander(grupo_nome, expanded=grupo_id in ("limites", "coberturas")):
@@ -327,12 +380,47 @@ with tab_ficha:
                         col1, col2, col3, col4 = st.columns([3, 3, 2, 1.3], vertical_alignment="center")
                         col1.markdown(f"**{seguro(campo.rotulo)}**")
                         col2.markdown(seguro(texto_curto(v)) if v.exibivel else "—")
-                        col3.markdown(ROTULO_STATUS[v.status.value])
+                        if v.exibivel and v.metodo == "humano":
+                            col3.markdown("🎓 ensinado")
+                        elif v.exibivel and v.metodo.startswith("aprendido:"):
+                            col3.markdown("🎓 aprendido")
+                        else:
+                            col3.markdown(ROTULO_STATUS[v.status.value])
+                        chave = f"{doc_id}_{campo.id}"
                         if v.exibivel and v.evidencia:
                             with col4.popover("Evidência", use_container_width=True):
-                                mostrar_evidencia(doc, v, f"pg_{doc_id}_{campo.id}")
-                        elif v.status == StatusEvidencia.NAO_VERIFICADO:
-                            col4.caption("sem prova")
+                                mostrar_evidencia(doc, v, f"pg_{chave}")
+                                with st.expander("Está errado? Ensine o valor certo"):
+                                    formulario_ensinar(doc, ficha, campo, f"cor_{chave}", f"Corrigir: {campo.rotulo}")
+                        elif v.status in (StatusEvidencia.NAO_LOCALIZADO, StatusEvidencia.NAO_VERIFICADO):
+                            with col4.popover("🎓 Ensinar", use_container_width=True):
+                                formulario_ensinar(doc, ficha, campo, f"ens_{chave}", f"Ensinar: {campo.rotulo}")
+
+            licoes = armazem().ensinamentos()
+            with st.expander(f"🎓 O que o sistema já aprendeu com corretores ({len(licoes)})"):
+                st.caption("Cada ensinamento vale para este documento e é reaplicado em outros documentos com a mesma "
+                           "redação (semelhança de pelo menos 90% e nenhuma palavra de exceção nova, como “salvo” ou “não”).")
+                if licoes:
+                    st.dataframe(pd.DataFrame([{"Seguradora": l.seguradora or "—", "Documento": l.doc_nome,
+                                                "Campo": esq.campo(l.campo_id).rotulo, "Valor": CURTO.get(str(l.valor), l.valor_texto),
+                                                "Página": l.pagina, "Trecho": l.trecho[:140]} for l in licoes]),
+                                 hide_index=True, use_container_width=True)
+                    c1, c2 = st.columns(2, vertical_alignment="bottom")
+                    if c1.button("Aplicar ensinamentos a este documento", use_container_width=True):
+                        valores, rel = ensino.reaplicar(doc, ficha.valores, licoes)
+                        armazem().salvar_ficha(ficha.model_copy(update={"valores": valores}))
+                        feitos = [r for r in rel if "recusado" not in r]
+                        st.session_state["aviso_ensino"] = (f"{len(feitos)} valor(es) preenchido(s) a partir de ensinamentos."
+                                                            if feitos else "Nenhum ensinamento combina com a redação deste documento.")
+                        st.rerun()
+                    remover = c2.selectbox("Remover ensinamento", [None] + [l.id for l in licoes],
+                                           format_func=lambda i: "—" if i is None else next(
+                                               f"{l.doc_nome} · {esq.campo(l.campo_id).rotulo}" for l in licoes if l.id == i))
+                    if remover and st.button("Remover"):
+                        armazem().remover_ensinamento(remover)
+                        st.rerun()
+                else:
+                    st.caption("Nenhum ensinamento ainda. Use o botão 🎓 Ensinar num campo não encontrado.")
 
 # ============================================================================ comparar
 with tab_comp:
@@ -498,9 +586,25 @@ with tab_aval:
         if dados.get("ocr"):
             st.caption(f"OCR — erro por caractere: médio {100 * dados['ocr']['cer_medio']:.2f}% · "
                        f"máximo {100 * dados['ocr']['cer_maximo']:.2f}%".replace(".", ","))
+    exp = config.SAIDA / "experimento_ensino.json"
+    if exp.exists():
+        dados = json.loads(exp.read_text(encoding="utf-8"))
+        st.markdown("#### Aprendendo com o corretor")
+        transferidos = [m for m in dados["mudancas"] if m["tipo"] == "transferido"]
+        errados = sum(1 for m in dados["mudancas"] if not m["acertou"])
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Ensinamentos", len(dados["ensinamentos"]), "só em documentos de desenvolvimento",
+                  delta_color="off", delta_arrow="off")
+        c2.metric("Campos corrigidos", len(dados["mudancas"]) - errados,
+                  f"{len(transferidos)} em outros documentos, sem ensinar de novo", delta_color="off", delta_arrow="off")
+        c3.metric("Valores errados novos", errados, delta_color="off", delta_arrow="off")
+        a, b = dados["antes"]["holdout"], dados["depois"]["holdout"]
+        st.caption(f"Nunca vistos: {a['acertos']} → {b['acertos']} de {b['campos']} campos. Um ensinamento só é reaplicado "
+                   "onde a redação é a mesma (outra versão da mesma seguradora); seguradora de redação diferente não "
+                   "recebe valor emprestado.")
     if achou:
         with st.expander("Como reproduzir"):
-            st.code("python -m prisma.cli avaliar --modo deterministico --ocr\npython -m prisma.cli avaliar --modo hibrido",
-                    language="bash")
+            st.code("python -m prisma.cli avaliar --modo deterministico --ocr\npython -m prisma.cli avaliar --modo hibrido\n"
+                    "python scripts/experimento_ensino.py", language="bash")
     else:
         st.info("Rode a avaliação pela linha de comando para ver as métricas aqui.")

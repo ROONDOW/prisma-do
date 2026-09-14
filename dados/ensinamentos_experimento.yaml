@@ -1,0 +1,23 @@
+# Ensinamentos do experimento "ensina uma vez" (scripts/experimento_ensino.py).
+#
+# Simulam um corretor corrigindo campos que a ficha deixou como "não encontrado". Protocolo:
+# - só documentos de DESENVOLVIMENTO recebem ensinamento (Berkley 2022 e Chubb Capital Aberto);
+# - o trecho foi copiado lendo a página do documento ensinado; o valor é o do gabarito dele;
+# - os documentos-alvo (Berkley 2017-2023, Chubb Capital Fechado, Sompo) NÃO foram abertos para
+#   escolher estes trechos, e o limiar de semelhança (0,90) foi fixado antes da medição.
+documentos:
+  - documento: berkley_do.pdf
+    campo: ambito_geografico
+    valor: mundial_exceto_eua_canada
+    pagina: 17
+    trecho: "As disposições deste contrato de seguro aplicam-se exclusivamente a danos ocorridos e reclamados em qualquer parte do mundo, com exceção a Estados Unidos, Canadá, Irã e Cuba"
+  - documento: berkley_do.pdf
+    campo: subrogacao_segurados
+    valor: sem_renuncia
+    pagina: 13
+    trecho: "fica assegurado o direito de regresso da Seguradora nos casos em que os danos causados a Terceiros decorram de Atos Ilícitos Dolosos, ou em que o Segurado reconheça a sua responsabilidade"
+  - documento: chubb_do_capital_aberto.pdf
+    campo: custos_defesa_no_limite
+    valor: dentro_do_limite
+    pagina: 41
+    trecho: "qualquer valor pago a título de custos de defesa, relacionado as Coberturas Adicionais e/ou as Extensões de Cobertura, será deduzido do Limite Máximo de Indenização (LMI) estabelecido para esta Cobertura Adicional"

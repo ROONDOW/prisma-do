@@ -41,6 +41,7 @@ class Indice:
         ordem = sorted(range(len(notas)), key=lambda i: notas[i], reverse=True)[:k]
         return [(self.blocos[i], float(notas[i])) for i in ordem if notas[i] > 0]
 
-    def para_campo(self, campo: CampoDef, k: int = 6) -> list[Bloco]:
-        consulta = " ".join([campo.rotulo] + campo.pistas + campo.rotulos_espec)
+    def para_campo(self, campo: CampoDef, k: int = 6, extra: str = "") -> list[Bloco]:
+        """`extra`: trechos ensinados por corretores para este campo (vocabulário de outra seguradora)."""
+        consulta = " ".join([campo.rotulo] + campo.pistas + campo.rotulos_espec + ([extra] if extra else []))
         return [b for b, _ in self.buscar(consulta, k)]

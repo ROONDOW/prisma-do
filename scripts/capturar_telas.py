@@ -47,6 +47,16 @@ def foto(page: Page, nome: str) -> None:
     print(f"ok  {nome}.png")
 
 
+def usar_ia(page: Page, ligada: bool) -> None:
+    """Liga/desliga a IA gratuita na barra lateral. As telas da comparação saem com a IA desligada:
+    provedor gratuito congestionado atrasa o resumo em minutos e a foto sairia com o spinner."""
+    chave = page.locator('[data-testid="stSidebar"] input[type="checkbox"]').first
+    if chave.count() and chave.is_enabled() and chave.is_checked() != ligada:
+        page.locator('[data-testid="stSidebar"] [data-testid="stCheckbox"], [data-testid="stSidebar"] label').filter(
+            has_text="Usar IA gratuita").first.click()
+        esperar_streamlit(page)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="http://localhost:8502")
@@ -71,10 +81,41 @@ def main() -> None:
         page.keyboard.press("Escape")
         time.sleep(0.8)
 
+        # ensinar: abre o formulário num campo não encontrado (sem enviar; o banco não muda)
+        page.get_by_role("combobox").first.click()
+        page.keyboard.type("berkley_do.pdf")
+        page.keyboard.press("Enter")
+        esperar_streamlit(page)
+        for resumo in page.locator('[data-testid="stExpander"] summary').all():
+            if "mbito e cl" in resumo.inner_text():
+                resumo.click()
+                time.sleep(0.8)
+        linha = page.locator('[data-testid="stHorizontalBlock"]').filter(has_text="Âmbito geográfico").last
+        linha.get_by_role("button", name="🎓 Ensinar").click()
+        time.sleep(1.2)
+        corpo = page.locator('[data-testid="stPopoverBody"]').last
+        corpo.get_by_label("Procurar no documento").fill("âmbito geográfico")
+        corpo.get_by_label("Procurar no documento").press("Enter")
+        esperar_streamlit(page)
+        corpo = page.locator('[data-testid="stPopoverBody"]').last
+        corpo.get_by_label("Página").fill("17")
+        corpo.get_by_label("Trecho exato").fill("As disposições deste contrato de seguro aplicam-se exclusivamente a danos "
+                                                "ocorridos e reclamados em qualquer parte do mundo, com exceção a Estados "
+                                                "Unidos, Canadá, Irã e Cuba")
+        corpo.locator('[data-testid="stSelectbox"]').click()
+        time.sleep(0.5)
+        page.get_by_role("option").filter(has_text="exceto EUA").first.click()
+        time.sleep(0.8)
+        foto(page, "10_ensinar")
+        page.keyboard.press("Escape")
+        time.sleep(0.8)
+
         aba(page, "3 · Comparar")
         rolar(page, 0)
+        usar_ia(page, False)
         page.get_by_role("button", name="Comparar").click()
-        esperar_streamlit(page, 120)
+        page.wait_for_selector("table.quadro", timeout=180000)
+        esperar_streamlit(page, 60)
         foto(page, "04_comparacao_resumo")
         rolar(page, 900)
         foto(page, "05_comparacao_quadro")
@@ -82,12 +123,14 @@ def main() -> None:
         foto(page, "06_comparacao_conformidade")
 
         aba(page, "💬 Pergunte")
+        usar_ia(page, True)
         rolar(page, 0)
         page.get_by_placeholder("Ex.: A apólice cobre multas aplicadas pela CVM?").fill("A apólice cobre penhora online?")
         page.keyboard.press("Enter")
         esperar_streamlit(page)
         page.get_by_role("button", name="Perguntar").click()
-        esperar_streamlit(page, 90)
+        page.get_by_text("Respondido por").first.wait_for(timeout=240000)
+        esperar_streamlit(page, 60)
         foto(page, "07_pergunte")
 
         aba(page, "🧭 Como funciona")

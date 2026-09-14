@@ -145,6 +145,8 @@ def recortar_diagrama() -> Path | None:
 
 def main():
     det, hib = av("deterministico"), av("hibrido")
+    arq_ens = config.SAIDA / "experimento_ensino.json"
+    ens = json.loads(arq_ens.read_text(encoding="utf-8")) if arq_ens.exists() else None
     grupo_arq = config.DADOS / "grupo.yaml"
     grupo = yaml.safe_load(grupo_arq.read_text(encoding="utf-8")) if grupo_arq.exists() else {}
     D = Deck()
@@ -250,15 +252,20 @@ def main():
     D.lista(s, [("Regras em YAML, ", "não no código nem no LLM: mudar uma regra muda o quadro — e dá para explicar ao cliente."),
                 ("Roda sem chave: ", "modo determinístico completo; com chave gratuita, o LLM amplia a cobertura."),
                 ("Custo zero: ", "Gemini, Groq e NVIDIA em cascata, com troca automática quando um provedor cai."),
-                ("OCR por página: ", "apólice real mistura páginas escaneadas e digitais."),
+                ("Aprende com o corretor: ", (f"{len(ens['ensinamentos'])} ensinamentos corrigiram "
+                                              f"{sum(1 for m in ens['mudancas'] if m['acertou'])} campos, "
+                                              f"{sum(1 for m in ens['mudancas'] if m['tipo'] == 'transferido')} em outros documentos, "
+                                              f"{sum(1 for m in ens['mudancas'] if not m['acertou'])} erro novo.")
+                                             if ens else "o trecho apontado vira regra para a mesma redação."),
                 ("Rastro completo: ", "cada agente registra o que fez e quanto tempo levou.")],
-            Inches(0.6), Inches(2.2), Inches(12), 18)
+            Inches(0.6), Inches(2.1), Inches(12), 17)
+    D.imagem(s, recorte("10_ensinar", (640, 340, 1345, 700)), Inches(8.3), Inches(4.75), Inches(4.4))
 
     # 10 — limitações e próximos passos
     s = D.slide()
     D.titulo(s, "Limites honestos e próximos passos")
     D.texto(s, "Limites", Inches(0.6), Inches(1.7), Inches(6), Inches(0.5), 20, cor=VERMELHO, negrito=True)
-    D.lista(s, [("Regras ", "sem LLM caem em seguradora nova."), ("Números ", "de apólice real são privados: a demo usa cotações fictícias."),
+    D.lista(s, [("Regras ", "sem LLM caem em seguradora nova (o corretor ensina uma vez)."), ("Números ", "de apólice real são privados: a demo usa cotações fictícias."),
                 ("“Não localizado” ", "pode estar em outro documento da apólice."), ("Favorabilidade ", "por campo, sem perfil de risco.")],
             Inches(0.6), Inches(2.3), Inches(5.9), 16)
     D.texto(s, "Próximos passos", Inches(6.9), Inches(1.7), Inches(6), Inches(0.5), 20, cor=VERDE, negrito=True)
@@ -269,7 +276,7 @@ def main():
     # 11 — para quem
     s = D.slide()
     D.titulo(s, "Para quem", "Apoio à decisão em quem lê apólice D&O todos os dias.")
-    for i, (g, l) in enumerate([("Corretores", "comparar propostas e explicar ao cliente onde cada uma é melhor"),
+    for i, (g, l) in enumerate([("Corretores", "comparar propostas e explicar ao cliente onde cada uma é mais favorável"),
                                 ("Gestores de risco", "conferir renovação e mudanças de redação entre versões"),
                                 ("Seguradoras", "revisar conformidade de condições com a Circular 637")]):
         D.cartao(s, Inches(0.6) + i * Inches(4.15), Inches(2.4), Inches(3.9), Inches(2.4), g, l, tam=26)

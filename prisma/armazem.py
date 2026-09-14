@@ -2,7 +2,8 @@
 """Armazém SQLite do PRISMA D&O — armazenamento estruturado (etapa 4 do edital).
 
 Tabelas: documentos · paginas (+ paginas_fts, busca textual FTS5) · clausulas · fichas ·
-comparacoes · rastro (uma linha por passo de agente, com duração e detalhe).
+comparacoes · rastro (uma linha por passo de agente, com duração e detalhe) · ensinamentos
+(trecho e valor apontados pelo corretor; sobrevivem à remoção do documento, porque valem para outros).
 O arquivo original fica em `saida/arquivos/<sha256>.<ext>` para a interface mostrar a página.
 Reprocessar o mesmo arquivo (mesmo SHA-256) reaproveita leitura e segmentação.
 """
@@ -16,6 +17,7 @@ from pathlib import Path
 from typing import Iterator, Optional
 
 from prisma import config
+from prisma.ensino import Ensinamento
 from prisma.modelos import Clausula, Comparacao, Documento, Ficha, Pagina
 
 ESQUEMA_SQL = """
@@ -44,6 +46,11 @@ CREATE TABLE IF NOT EXISTS comparacoes (
 CREATE TABLE IF NOT EXISTS rastro (
     id INTEGER PRIMARY KEY AUTOINCREMENT, execucao TEXT NOT NULL, agente TEXT NOT NULL, doc_id TEXT,
     inicio REAL NOT NULL, duracao_s REAL NOT NULL, detalhe TEXT NOT NULL DEFAULT '{}'
+);
+CREATE TABLE IF NOT EXISTS ensinamentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, doc_id TEXT NOT NULL, doc_nome TEXT NOT NULL, seguradora TEXT NOT NULL,
+    campo_id TEXT NOT NULL, valor TEXT NOT NULL, valor_texto TEXT NOT NULL, trecho TEXT NOT NULL,
+    pagina INTEGER NOT NULL, criado_em REAL NOT NULL, UNIQUE (doc_id, campo_id)
 );
 CREATE INDEX IF NOT EXISTS idx_clausulas_doc ON clausulas(doc_id);
 CREATE INDEX IF NOT EXISTS idx_rastro_execucao ON rastro(execucao);
@@ -191,3 +198,29 @@ class Armazem:
                                    "ORDER BY id DESC LIMIT ?", (limite,)).fetchall()
         return [{"execucao": e, "agente": a, "doc_id": d, "inicio": i, "duracao_s": s, "detalhe": json.loads(dt)}
                 for e, a, d, i, s, dt in linhas]
+
+    # ------------------------------------------------------------------ ensinamentos
+    def salvar_ensinamento(self, lic: Ensinamento) -> None:
+        """Um ensinamento por (documento, campo): ensinar de novo substitui o anterior."""
+        with self._conexao() as c:
+            c.execute("INSERT INTO ensinamentos (doc_id, doc_nome, seguradora, campo_id, valor, valor_texto, trecho, "
+                      "pagina, criado_em) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(doc_id, campo_id) DO UPDATE SET "
+                      "valor=excluded.valor, valor_texto=excluded.valor_texto, trecho=excluded.trecho, "
+                      "pagina=excluded.pagina, criado_em=excluded.criado_em",
+                      (lic.doc_id, lic.doc_nome, lic.seguradora, lic.campo_id, json.dumps(lic.valor, ensure_ascii=False),
+                       lic.valor_texto, lic.trecho, lic.pagina, time.time()))
+
+    def ensinamentos(self, campo_id: Optional[str] = None) -> list[Ensinamento]:
+        sql = "SELECT id, doc_id, doc_nome, seguradora, campo_id, valor, valor_texto, trecho, pagina, criado_em FROM ensinamentos"
+        params: list = []
+        if campo_id:
+            sql += " WHERE campo_id = ?"
+            params.append(campo_id)
+        with self._conexao() as c:
+            linhas = c.execute(sql + " ORDER BY criado_em", params).fetchall()
+        return [Ensinamento(id=i, doc_id=d, doc_nome=n, seguradora=s, campo_id=cid, valor=json.loads(v), valor_texto=vt,
+                            trecho=t, pagina=p, criado_em=cr) for i, d, n, s, cid, v, vt, t, p, cr in linhas]
+
+    def remover_ensinamento(self, ensinamento_id: int) -> None:
+        with self._conexao() as c:
+            c.execute("DELETE FROM ensinamentos WHERE id = ?", (ensinamento_id,))

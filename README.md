@@ -67,6 +67,12 @@ consulta → comparação → apresentação.
 | **Relator** | Resumo executivo ancorado (valor fora do quadro ou recomendação ⇒ resumo determinístico) e PDF comparativo com anexo de evidências | `prisma/agentes/relator.py` |
 | **Consultor** | Pergunta livre → recuperação → resposta com citações conferidas; sem citação válida, "não localizado" | `prisma/agentes/consultor.py` |
 
+**Memória de ensinamentos** (`prisma/ensino.py`): quando um campo aparece como "não encontrado", o
+corretor clica em **🎓 Ensinar**, aponta o trecho e o valor. O Verificador confere o trecho na página
+antes de aceitar. O ensinamento é guardado e reaplicado em outros documentos com a mesma redação
+(semelhança ≥ 0,90 e nenhuma palavra de exceção nova, como "salvo" ou "não"), além de entrar como exemplo
+na busca de cláusulas e no pedido à IA. Um trecho com instrução dirigida a IA nunca vira exemplo.
+
 **Esquema D&O** (`dados/campos.yaml`): 36 campos em 6 grupos — identificação; limites, franquia e
 prêmio; gatilho temporal (base de contratação, retroatividade, prazos adicionais); coberturas (A, B, C,
 penhora online, multas, investigação, herdeiros, ambiental, trabalhista, crise, extradição); exclusões
@@ -90,16 +96,21 @@ Gabarito: **281 campos** em 10 documentos. O holdout (Sompo e Chubb Capital Fech
 **OCR (RapidOCR)** em 7 páginas: CER alinhado por linha médio **0.03%** (máximo 0.10%); CER da página inteira, que também pune diferença de ordem de leitura, até 5.5%.
 <!-- RESULTADOS:FIM -->
 
-Como reproduzir: `python -m prisma.cli avaliar --modo deterministico --ocr` e
-`python -m prisma.cli avaliar --modo hibrido`. Regras de pontuação em `prisma/avaliacao.py`.
+**Aprendizado com o corretor** (`scripts/experimento_ensino.py`): 3 ensinamentos feitos só em documentos
+de desenvolvimento corrigiram 6 campos — 3 no próprio documento e 3 em outros documentos com a mesma
+redação (2 na outra versão da Berkley, 1 na Chubb Capital Fechado, que é holdout) — com 0 valor errado
+novo. A Sompo, de redação diferente, não recebeu valor emprestado. Protocolo em `docs/DESVIOS.md` (D11).
+
+Como reproduzir: `python -m prisma.cli avaliar --modo deterministico --ocr`,
+`python -m prisma.cli avaliar --modo hibrido` e `python scripts/experimento_ensino.py`. Regras de pontuação em `prisma/avaliacao.py`.
 
 ## Instalação
 
 Requisitos: Python 3.11+ (testado em 3.12). Nenhum binário de sistema (sem Tesseract, sem Poppler).
 
 ```bash
-git clone <URL-DO-REPOSITORIO>
-cd prisma_do
+git clone https://github.com/ROONDOW/prisma-do.git
+cd prisma-do
 python -m venv .venv
 .venv\Scripts\activate          # Windows  (Linux/macOS: source .venv/bin/activate)
 pip install -r requirements.txt

@@ -69,3 +69,20 @@ cobertura como "básica" porque o termo aparece numa **definição** ou numa **e
 genérica é exigir linguagem de oferta de cobertura no trecho. Ela foi formulada depois de ver o
 holdout; aplicá-la agora mediria ajuste, não generalização. Fica registrada como próximo passo, a ser
 validada num novo conjunto de documentos.
+
+## D11 — Aprender com o corretor em vez de ajustar regra ao holdout
+**Problema:** no holdout, 13 dos 14 erros sem chave são "não localizado" e estão concentrados na Sompo,
+seguradora de redação diferente das do desenvolvimento. Escrever regras olhando a Sompo inflaria o número.
+**Feito:** memória de ensinamentos (`prisma/ensino.py`). O corretor aponta trecho e valor; o Verificador
+confere; o ensinamento é reaplicado onde a redação é a mesma e vira exemplo para a IA.
+**Protocolo da medição (`scripts/experimento_ensino.py`, `dados/ensinamentos_experimento.yaml`):**
+ensinamentos só em documentos de desenvolvimento (Berkley 2022 e Chubb Capital Aberto), trecho copiado da
+página do documento ensinado, valor do gabarito dele; documentos-alvo não abertos para escolher trechos;
+limiar de 0,90 fixado antes de medir; o script recusa ensinamento em documento do holdout.
+**Resultado:** 6 campos corrigidos (3 ensinados, 3 transferidos: Berkley 2017-2023 ×2 e Chubb Capital
+Fechado ×1), 0 valor errado novo; holdout sem chave 44 → 45 de 58. A Sompo não mudou — e não deveria: ela
+precisa ser ensinada uma vez por um corretor. Isso não é generalização das regras; é o custo real de uma
+seguradora nova ficar explícito e pagável uma única vez.
+**Salvaguardas testadas:** trecho inexistente, curto, com instrução a IA ou sem o número é recusado;
+reaplicação recusada se a versão nova acrescenta ou retira palavra de exceção/negação; valor já
+verificado não é substituído; número é relido no documento novo.

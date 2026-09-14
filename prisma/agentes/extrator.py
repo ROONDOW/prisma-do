@@ -368,7 +368,7 @@ Regras invioláveis:
 5. Responda apenas com JSON válido, sem comentários."""
 
 
-def _descrever_campos(campos: list[CampoDef], espec: bool) -> str:
+def _descrever_campos(campos: list[CampoDef], espec: bool, exemplos: Optional[dict] = None) -> str:
     esq = carregar_esquema()
     linhas = []
     for c in campos:
@@ -383,6 +383,10 @@ def _descrever_campos(campos: list[CampoDef], espec: bool) -> str:
         item = f'- "{c.id}" ({c.rotulo}): {c.instrucao} Formato: {tipo}.'
         if validos:
             item += " Chaves permitidas: " + "; ".join(f'"{k}" = {v}' for k, v in validos.items()) + "."
+        for ex in (exemplos or {}).get(c.id, []):
+            # exemplo confirmado por corretor em OUTRA apólice: ensina a redação, não o valor deste documento
+            trecho = _limpar_conteudo(re.sub(r"\s+", " ", ex.trecho))[:300].replace('"', "'")
+            item += f' Exemplo confirmado por corretor em outra apólice: trecho "{trecho}" → {json.dumps(ex.valor, ensure_ascii=False)}.'
         linhas.append(item)
     return "\n".join(linhas)
 
@@ -448,7 +452,9 @@ aparece só como cláusula específica/particular de exclusão; se não houver e
 
 
 def extrair_llm(doc: Documento, clausulas: list[Clausula], cascata: Cascata,
-                max_chars: int = 11000, verificar: bool = True) -> dict[str, ValorCampo]:
+                max_chars: int = 11000, verificar: bool = True, exemplos: Optional[dict] = None) -> dict[str, ValorCampo]:
+    """`exemplos`: campo_id -> ensinamentos de outros documentos (prisma.ensino.exemplos_para_ia)."""
+    exemplos = exemplos or {}
     esq = carregar_esquema()
     espec = eh_especificacao(doc)
     aplicaveis = {c.id for c in campos_aplicaveis(doc)}
@@ -465,7 +471,8 @@ def extrair_llm(doc: Documento, clausulas: list[Clausula], cascata: Cascata,
         else:
             vistos, selecionados, total = set(), [], 0
             iniciais = [b for b in todos_blocos if b.pagina_inicio <= 2] if nome_grupo == "identificacao" else []
-            candidatos = iniciais[:2] + [b for c in campos for b in indice.para_campo(c, k=4)]
+            candidatos = iniciais[:2] + [b for c in campos for b in indice.para_campo(
+                c, k=4, extra=" ".join(ex.trecho for ex in exemplos.get(c.id, [])))]
             for b in candidatos:
                 chave = (b.clausula_id, b.pagina_inicio, b.texto[:40])
                 if chave in vistos or total + len(b.texto) > max_chars:
@@ -475,7 +482,7 @@ def extrair_llm(doc: Documento, clausulas: list[Clausula], cascata: Cascata,
                 total += len(b.texto)
         pedido = (("Contexto: este documento é a ESPECIFICAÇÃO de uma apólice (valores contratados).\n"
                    if espec else EXPLICACAO_CG + "\n")
-                  + "\nCampos a extrair:\n" + _descrever_campos(campos, espec)
+                  + "\nCampos a extrair:\n" + _descrever_campos(campos, espec, exemplos)
                   + '\n\nFormato de resposta: {"campos": [{"campo": "<id>", "valor": ..., "trecho": "...", "pagina": N}]}'
                   + "\n\n<documento>\n" + _montar_documento(selecionados) + "\n</documento>")
         try:

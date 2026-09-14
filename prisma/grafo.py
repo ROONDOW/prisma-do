@@ -16,7 +16,7 @@ import time
 import uuid
 from typing import Any, Callable, Optional, TypedDict
 
-from prisma import corpus
+from prisma import corpus, ensino
 from prisma.agentes import comparador, conformidade, extrator, leitor, recepcionista, relator, segmentador
 from prisma.armazem import Armazem
 from prisma.llm import Cascata
@@ -97,7 +97,9 @@ def construir_grafo_documento(armazem: Armazem, cascata: Optional[Cascata]):
     def no_extrator(e: EstadoDocumento) -> EstadoDocumento:
         doc, t0 = e["documento"], time.time()
         det = extrator.extrair_deterministico(doc, e["clausulas"], verificar=False)
-        llm = extrator.extrair_llm(doc, e["clausulas"], cascata, verificar=False) if cascata else {}
+        licoes = armazem.ensinamentos()
+        llm = extrator.extrair_llm(doc, e["clausulas"], cascata, verificar=False,
+                                   exemplos=ensino.exemplos_para_ia(licoes, doc.id)) if cascata else {}
         armazem.registrar(e["execucao"], "extrator", doc.id, t0,
                           {"modo": "hibrido" if cascata else "deterministico",
                            "provedor": cascata.ultimo_provedor if cascata else None,
@@ -115,6 +117,8 @@ def construir_grafo_documento(armazem: Armazem, cascata: Optional[Cascata]):
             ficha = Ficha(doc_id=doc.id, valores=extrator.fundir(llm, det), modo="hibrido")
         else:
             ficha = Ficha(doc_id=doc.id, valores=det, modo="deterministico")
+        valores, aprendidos = ensino.reaplicar(doc, ficha.valores, armazem.ensinamentos())
+        ficha = ficha.model_copy(update={"valores": valores})
         armazem.salvar_ficha(ficha)
         seguradora = ficha.valores.get("seguradora")
         if not doc.metadados.get("seguradora") and seguradora and seguradora.exibivel:
@@ -125,9 +129,11 @@ def construir_grafo_documento(armazem: Armazem, cascata: Optional[Cascata]):
         resumo = extrator.resumo_ficha(ficha)
         reprovados = [v.campo_id for v in list(e["brutos_det"].values()) + list(e.get("brutos_llm", {}).values())
                       if v.evidencia is not None]
-        armazem.registrar(e["execucao"], "verificador", doc.id, t0, {**resumo, "candidatos": len(reprovados)})
+        armazem.registrar(e["execucao"], "verificador", doc.id, t0, {**resumo, "candidatos": len(reprovados),
+                                                                     "ensinamentos_aplicados": aprendidos})
         _avisar(e, "Verificador", f"{resumo['verificado']} valores com evidência conferida; "
-                                  f"{resumo['nao_verificado']} reprovados")
+                                  f"{resumo['nao_verificado']} reprovados"
+                + (f"; {sum(1 for a in aprendidos if 'recusado' not in a)} vindos de ensinamentos" if aprendidos else ""))
         return {"ficha": ficha, "documento": doc}
 
     nos = [("recepcionista", no_recepcionista), ("leitor", no_leitor), ("segmentador", no_segmentador),
