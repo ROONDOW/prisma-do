@@ -1,0 +1,51 @@
+documento: sompo_do_2025.pdf
+ficticio: false
+holdout: true
+fonte_do_gabarito: 'HOLDOUT: anotado lendo o PDF em 2026-09-13 ANTES de rodar o extrator;
+  regras não foram ajustadas depois. As coberturas estão em condições especiais separadas,
+  não neste documento.'
+campos:
+  seguradora:
+    aceita:
+    - sompo
+    nota: ''
+  processo_susep: 15414.652408/2023-71
+  reintegracao_limite: sem_reintegracao
+  custos_defesa_no_limite: dentro_do_limite
+  base_contratacao: reclamacao_com_notificacao
+  prazo_complementar: conforme_especificacao
+  prazo_suplementar: conforme_especificacao
+  cobertura_a: nao_prevista
+  cobertura_b: nao_prevista
+  cobertura_c: nao_prevista
+  adiantamento_custos_defesa: adiantamento
+  livre_escolha_advogado: true
+  penhora_online: nao_prevista
+  multas_penalidades: nao_prevista
+  custos_investigacao: nao_prevista
+  herdeiros_conjuges: nao_prevista
+  dano_ambiental: nao_prevista
+  praticas_trabalhistas: nao_prevista
+  gerenciamento_crise: nao_prevista
+  custos_extradicao: nao_prevista
+  exclusao_dolo_gatilho: decisao_final
+  exclusao_insolvencia: nao_excluido
+  exclusao_danos_corporais_materiais:
+    aceita:
+    - excluido_com_ressalva
+    - excluido
+    nota: 4.1.4 exclui, 'exceto quando contratada extensão'
+  exclusao_litigios_previos: excluido
+  exclusao_cibernetica:
+    aceita:
+    - excluido_com_ressalva
+    - excluido
+    nota: 4.1.16 'salvo disposição em contrário'
+  exclusao_tributaria:
+    aceita:
+    - excluido_com_ressalva
+    - excluido
+    nota: 4.1.13 'salvo ... Extensão de Garantia para Responsabilidade por Tributos'
+  ambito_geografico: mundial
+  subrogacao_segurados: renuncia_salvo_dolo
+  menciona_lei_15040: false

@@ -1,0 +1,54 @@
+documento: chubb_do_capital_fechado.pdf
+ficticio: false
+holdout: true
+fonte_do_gabarito: 'HOLDOUT (mesma família da Chubb Capital Aberto, holdout fraco):
+  anotado por diferença textual contra a versão Capital Aberto, antes de rodar o extrator.'
+campos:
+  reintegracao_limite: sem_reintegracao
+  custos_defesa_no_limite: dentro_do_limite
+  base_contratacao: reclamacao_com_notificacao
+  cobertura_a: basica
+  cobertura_b: basica
+  adiantamento_custos_defesa: adiantamento
+  livre_escolha_advogado: true
+  exclusao_litigios_previos: excluido
+  seguradora:
+    aceita:
+    - chubb
+    nota: ''
+  processo_susep: 15414.900832/2017-90
+  prazo_complementar:
+    aceita:
+    - 1080
+    - conforme_especificacao
+    nota: '23.1: ''até 36 meses, conforme vier descrito na Especificação'''
+  prazo_suplementar:
+    aceita:
+    - conforme_especificacao
+    - 365
+    nota: '24.1: conforme Especificação; oferta obrigatória de 1 ano'
+  cobertura_c:
+    aceita:
+    - nao_prevista
+    - adicional
+    nota: 6.3 iii cita 'Cobertura Adicional C, desde que contratada', mas a cláusula
+      da Cobertura C não consta deste documento
+  penhora_online: adicional
+  multas_penalidades: adicional
+  custos_investigacao: adicional
+  herdeiros_conjuges: adicional
+  dano_ambiental: adicional
+  praticas_trabalhistas: adicional
+  gerenciamento_crise: adicional
+  custos_extradicao: adicional
+  exclusao_dolo_gatilho: decisao_final
+  exclusao_insolvencia: exclusao_opcional
+  exclusao_danos_corporais_materiais: excluido_com_ressalva
+  exclusao_cibernetica: exclusao_opcional
+  exclusao_tributaria: nao_excluido
+  ambito_geografico: mundial
+  subrogacao_segurados:
+    aceita:
+    - sem_renuncia
+    nota: 28.1 sub-rogação ampla; 6.6 regresso em dolo; sem renúncia expressa
+  menciona_lei_15040: true

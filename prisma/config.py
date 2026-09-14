@@ -11,6 +11,7 @@ DADOS = RAIZ / "dados"
 APOLICES = RAIZ / "apolices"
 REAIS = APOLICES / "reais"
 SINTETICAS = APOLICES / "sinteticas"
+HOLDOUT = APOLICES / "holdout"
 GABARITO = RAIZ / "gabarito"
 SAIDA = Path(os.environ.get("PRISMA_SAIDA", RAIZ / "saida"))
 BANCO = Path(os.environ.get("PRISMA_BANCO", SAIDA / "prisma.sqlite"))

@@ -122,13 +122,26 @@ def _extrair_especificacao(doc: Documento, campo: CampoDef, linhas) -> Optional[
     if campo.id in regras["duracoes"]:
         return _extrair_duracao(campo, linhas)
     if campo.linha_tabela:
-        # linha de tabela: só a própria linha vale (a de baixo é outra cobertura)
-        for pag, linha in linhas:
+        # linha do quadro de coberturas. OCR costuma pôr a linha inteira junta; o PDF digital
+        # separa as células ("Penhora..." / "Contratada" / "R$ 5.000.000,00"). Seguimos só as
+        # células da MESMA linha: situação e valor; qualquer outro texto já é a cobertura seguinte.
+        for i, (pag, linha) in enumerate(linhas):
             norm = normalizar.texto_busca(linha)
-            if campo.linha_tabela in norm and "nao contratada" not in norm:
-                valor = normalizar.dinheiro(linha)
-                if valor is not None:
-                    return _valor(campo.id, valor, texto_do_valor(campo, valor), linha.strip(), pag)
+            if campo.linha_tabela not in norm:
+                continue
+            partes = [linha.strip()]
+            for _, prox in linhas[i + 1:i + 3]:
+                pn = normalizar.texto_busca(prox)
+                if re.fullmatch(r"(nao )?contratada|r\$ ?[0-9.,]+|[-—–]", pn):
+                    partes.append(prox.strip())
+                else:
+                    break
+            juntas = " ".join(partes)
+            if "nao contratada" in normalizar.texto_busca(juntas):
+                return None
+            valor = normalizar.dinheiro(juntas)
+            if valor is not None:
+                return _valor(campo.id, valor, texto_do_valor(campo, valor), juntas, pag)
         return None
     for rotulo in campo.rotulos_espec or [campo.rotulo]:
         r = normalizar.texto_busca(rotulo)
@@ -432,7 +445,7 @@ aparece só como cláusula específica/particular de exclusão; se não houver e
 
 
 def extrair_llm(doc: Documento, clausulas: list[Clausula], cascata: Cascata,
-                max_chars: int = 16000) -> dict[str, ValorCampo]:
+                max_chars: int = 11000) -> dict[str, ValorCampo]:
     esq = carregar_esquema()
     espec = eh_especificacao(doc)
     aplicaveis = {c.id for c in campos_aplicaveis(doc)}

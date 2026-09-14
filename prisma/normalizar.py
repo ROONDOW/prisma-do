@@ -28,6 +28,7 @@ def texto_busca(s: str) -> str:
     minúsculas, troca aspas/traços tipográficos e colapsa todo espaço em branco."""
     if not s:
         return ""
+    s = unicodedata.normalize("NFKC", s)  # ligaduras tipográficas de PDF: "ﬁ" -> "fi", "ﬂ" -> "fl"
     s = re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", s)  # respon-\nsabilidade
     s = s.replace("­", "")  # hífen suave
     s = s.translate(str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'", "–": "-", "—": "-", "º": "o", "ª": "a", "°": "o"}))

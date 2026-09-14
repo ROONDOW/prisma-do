@@ -25,12 +25,12 @@ AUSENCIA = {None, False, "nao_prevista", "nao_excluido"}
 
 
 def carregar_gabaritos() -> list[dict]:
-    return [yaml.safe_load(p.read_text(encoding="utf-8")) | {"arquivo_gabarito": p.name}
-            for p in sorted(config.GABARITO.glob("*.yaml"))]
+    arquivos = sorted(config.GABARITO.glob("*.yaml")) + sorted((config.GABARITO / "holdout").glob("*.yaml"))
+    return [yaml.safe_load(p.read_text(encoding="utf-8")) | {"arquivo_gabarito": p.name} for p in arquivos]
 
 
 def caminho_documento(nome: str) -> Optional[Path]:
-    for pasta in (config.SINTETICAS, config.REAIS):
+    for pasta in (config.SINTETICAS, config.REAIS, config.HOLDOUT):
         if (pasta / nome).exists():
             return pasta / nome
     return None
@@ -81,7 +81,8 @@ def avaliar_fichas(fichas: dict[str, Ficha]) -> dict:
             verificado = v is not None and v.status == StatusEvidencia.VERIFICADO
             previsto = v.valor if verificado else None
             detalhe.append({
-                "documento": gab["documento"], "ficticio": gab.get("ficticio", False), "campo": cid,
+                "documento": gab["documento"], "ficticio": gab.get("ficticio", False),
+                "holdout": gab.get("holdout", False), "campo": cid,
                 "grupo": campo.grupo, "tipo": campo.tipo, "ouro": ouro, "previsto": previsto,
                 "status": v.status.value if v else "sem_ficha", "metodo": v.metodo if v else "",
                 "acerto": acertou(campo.tipo, previsto, ouro),
@@ -105,8 +106,10 @@ def resumir(detalhe: list[dict]) -> dict:
         por_grupo[i["grupo"]].append(i)
     return {
         "geral": _taxa(detalhe),
+        "desenvolvimento": _taxa([i for i in detalhe if not i["holdout"]]),
+        "holdout": _taxa([i for i in detalhe if i["holdout"]]),
         "especificacoes": _taxa([i for i in detalhe if i["ficticio"]]),
-        "condicoes_gerais": _taxa([i for i in detalhe if not i["ficticio"]]),
+        "condicoes_gerais": _taxa([i for i in detalhe if not i["ficticio"] and not i["holdout"]]),
         "por_documento": {k: _taxa(v) for k, v in por_doc.items()},
         "por_grupo": {k: _taxa(v) for k, v in por_grupo.items()},
     }

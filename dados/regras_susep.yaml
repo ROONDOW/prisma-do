@@ -1,0 +1,127 @@
+# Regras de conformidade do PRISMA D&O (Lei da Regra Declarada).
+#
+# Cada regra cita o artigo e traz `trecho_norma`: cópia LITERAL da norma. O teste
+# `test_regras_susep_citam_texto_literal` confere cada trecho contra o PDF da Circular SUSEP
+# 637/2021 (quando o corpus está baixado). Regra sem trecho verificável não entra.
+#
+# Condições (todas precisam ser verdadeiras para o alerta disparar):
+#   campo_ausente: <campo>             o campo não tem valor verificado na ficha
+#   campo_em: {campo, valores: [...]}  o valor verificado está na lista
+#   texto_ausente: <regex>             nenhuma linha do documento casa (texto normalizado)
+#   texto_presente: <regex>            alguma linha casa (vira a evidência do alerta)
+# aplica_a: especificacao | condicoes_gerais | todos
+# severidade: atencao (possível desconformidade) | informativo (ponto a conferir)
+#
+# O sistema APONTA indícios para revisão humana; não emite parecer jurídico.
+
+norma_padrao: Circular SUSEP nº 637, de 27 de julho de 2021
+
+regras:
+  - id: S637-17-RETROATIVIDADE
+    artigo: "art. 17"
+    aplica_a: especificacao
+    severidade: atencao
+    trecho_norma: "As apólices dos seguros à base de reclamações devem indicar, expressamente, em destaque, além de sua vigência, o período ou data limite de retroatividade da apólice"
+    condicoes:
+      - campo_em: {campo: base_contratacao, valores: [reclamacao, reclamacao_com_notificacao, primeira_manifestacao]}
+      - campo_ausente: data_retroatividade
+    mensagem: "Apólice à base de reclamações sem data limite de retroatividade localizada na especificação."
+
+  - id: S637-19-PRAZO-ADICIONAL-ESPEC
+    artigo: "art. 19"
+    aplica_a: especificacao
+    severidade: atencao
+    trecho_norma: "As condições contratuais devem conter cláusula de prazo adicional"
+    condicoes:
+      - campo_em: {campo: base_contratacao, valores: [reclamacao, reclamacao_com_notificacao, primeira_manifestacao]}
+      - campo_ausente: prazo_complementar
+      - texto_ausente: "prazo (adicional|complementar|suplementar)"
+    mensagem: "A especificação não indica prazo adicional (complementar/suplementar) nem remete a cláusula de prazo adicional."
+
+  - id: S637-19-PRAZO-ADICIONAL-CG
+    artigo: "art. 19"
+    aplica_a: condicoes_gerais
+    severidade: atencao
+    trecho_norma: "As condições contratuais devem conter cláusula de prazo adicional"
+    condicoes:
+      - texto_ausente: "prazo (adicional|complementar)"
+    mensagem: "Não foi localizada cláusula de prazo adicional nas condições contratuais."
+
+  - id: S637-19-2-VI-VIGENCIA
+    artigo: "art. 19, § 2º, VI"
+    aplica_a: condicoes_gerais
+    severidade: atencao
+    trecho_norma: "a informação de que a contratação do prazo adicional não acarreta, em hipótese alguma, a ampliação do período de vigência do contrato de seguro"
+    condicoes:
+      - texto_presente: "prazo (adicional|complementar|suplementar)"
+      - texto_ausente: "(nao|nenhuma hipotese|jamais)[^.]{0,120}(ampliacao|amplia|prorrogacao|altera|alterarao|importa na ampliacao)[^.]{0,60}vigencia"
+    mensagem: "Não foi localizada a informação de que o prazo adicional não amplia a vigência."
+
+  - id: S637-19-2-I-LIMITE-ESGOTADO
+    artigo: "art. 19, § 2º, I"
+    aplica_a: condicoes_gerais
+    severidade: informativo
+    trecho_norma: "que o prazo adicional não se aplica àquelas coberturas cujo pagamento de indenizações tenha esgotado o respectivo limite agregado ou limite máximo de garantia"
+    condicoes:
+      - texto_presente: "prazo (adicional|complementar|suplementar)"
+      - texto_ausente: "(prazo (adicional|complementar|suplementar)|nao sera concedido)[^.]{0,160}(limite agregado|limite maximo)"
+    mensagem: "Não foi localizada a ressalva de que o prazo adicional não se aplica a coberturas com limite esgotado."
+
+  - id: S637-8-LEGISLACAO-ESTRANGEIRA
+    artigo: "art. 8º"
+    aplica_a: todos
+    severidade: atencao
+    trecho_norma: "São vedadas referências a qualquer tipo de legislação estrangeira, quando o âmbito geográfico do seguro de responsabilidade civil for o território nacional"
+    condicoes:
+      - campo_em: {campo: ambito_geografico, valores: [brasil]}
+      - texto_presente: "legislacao estrangeira|leis? (norte-americana|americana|dos estados unidos)|securities act|sarbanes|foreign corrupt|fcpa"
+    mensagem: "Âmbito territorial brasileiro com referência a legislação estrangeira."
+
+  - id: S637-9-II-LIVRE-ESCOLHA
+    artigo: "art. 9º, II"
+    aplica_a: condicoes_gerais
+    severidade: atencao
+    trecho_norma: "a possibilidade de livre escolha ou da utilização de profissionais referenciados, pelos segurados, no caso de ser comercializada cobertura para os custos de defesa"
+    condicoes:
+      - texto_presente: "custos de defesa"
+      - texto_ausente: "livre escolha|livremente|escolhidos pelo|profissionais referenciados|referenciados pela seguradora"
+    mensagem: "Há cobertura de custos de defesa, mas não foi localizada menção à livre escolha ou a profissionais referenciados."
+
+  - id: S637-9-III-RESSARCIMENTO-DOLO
+    artigo: "art. 9º, III"
+    aplica_a: condicoes_gerais
+    severidade: informativo
+    trecho_norma: "o direito de ressarcimento da sociedade seguradora por valores adiantados ao segurado ou ao tomador, nos casos de comercializada cobertura para os custos de defesa, quando os danos causados a terceiros tenham decorrido de atos ilícitos dolosos"
+    condicoes:
+      - texto_presente: "custos de defesa"
+      - texto_ausente: "(ressarc|regresso|reembols|devolv|restitu)[^.]{0,250}dolos|dolos[^.]{0,250}(ressarc|regresso|reembols|devolv|restitu)"
+    mensagem: "Não foi localizado o direito de ressarcimento de valores adiantados em caso de ato doloso."
+
+  - id: S637-24-NOTIFICACOES
+    artigo: "art. 24"
+    aplica_a: condicoes_gerais
+    severidade: atencao
+    trecho_norma: "Os seguros à base de reclamações com notificações devem apresentar, no mínimo, as seguintes informações"
+    condicoes:
+      - campo_em: {campo: base_contratacao, valores: [reclamacao_com_notificacao]}
+      - texto_ausente: "notifica[a-z]*[^.]{0,160}(durante (a|sua) vigencia|periodo de vigencia)"
+    mensagem: "Apólice com notificação sem a regra de que a notificação deve ser feita durante a vigência."
+
+  - id: S637-21-AUMENTO-LMI
+    artigo: "art. 21"
+    aplica_a: condicoes_gerais
+    severidade: informativo
+    trecho_norma: "A cláusula de aumento do limite máximo de indenização, caso aceito pela sociedade seguradora, deve ser expressa em relação às coberturas que alcança e ao critério temporal"
+    condicoes:
+      - texto_ausente: "aumento (do|dos) limites? maximos? de (indenizacao|garantia)"
+    mensagem: "Não foi localizada cláusula de aumento do limite máximo de indenização com critério temporal."
+
+  - id: L15040-ADEQUACAO
+    artigo: "Lei nº 15.040/2024"
+    norma: Lei nº 15.040, de 9 de dezembro de 2024 (Lei de Seguros)
+    aplica_a: condicoes_gerais
+    severidade: informativo
+    trecho_norma: ""
+    condicoes:
+      - campo_ausente: menciona_lei_15040
+    mensagem: "O documento não menciona adequação à nova Lei de Seguros (15.040/2024); confira a versão vigente das condições."

@@ -1,0 +1,127 @@
+# Regras de favorabilidade ao SEGURADO (Lei da Regra Declarada + Lei do Cérebro-Músculo).
+#
+# O comparador NÃO pergunta ao LLM qual apólice é melhor: aplica estas regras aos valores
+# verificados. Mudar uma regra aqui muda o quadro sem tocar em código.
+#
+# criterio:
+#   maior_melhor | menor_melhor          números (dinheiro, duração)
+#   retroatividade                       "ilimitada" > data mais antiga > data mais recente
+#   ordem                                lista do MELHOR para o PIOR; itens na mesma posição empatam
+#   informativo                          mostra a diferença, sem juízo de favorabilidade
+# ausente_como: valor assumido quando o campo não foi localizado (só onde a ausência tem sentido
+#   jurídico claro — ex.: exclusão não localizada = risco não excluído no documento).
+# fundamento: por que essa ordem favorece o segurado (fonte: notebook do projeto, 111 fontes;
+#   Circular SUSEP 637/2021).
+#
+# Apoio à decisão, não conselho: "mais favorável" refere-se ao texto do campo, não à apólice inteira.
+
+regras:
+  - {id: R01, campo: seguradora, criterio: informativo}
+  - {id: R02, campo: processo_susep, criterio: informativo}
+  - {id: R03, campo: tomador, criterio: informativo}
+  - {id: R04, campo: vigencia, criterio: informativo}
+
+  - id: R05
+    campo: limite_maximo_garantia
+    criterio: maior_melhor
+    fundamento: "Limite maior amplia a proteção total; LMG baixo e compartilhado pode ser esgotado por um único sinistro."
+  - id: R06
+    campo: franquia
+    criterio: menor_melhor
+    fundamento: "Franquia menor reduz a parcela suportada pela empresa/segurado; o mercado valoriza franquia zero na Cobertura A."
+  - id: R07
+    campo: sublimite_penhora_online
+    criterio: maior_melhor
+    fundamento: "Sublimites baixos em coberturas de alta frequência (penhora online) reduzem a proteção efetiva."
+  - id: R08
+    campo: sublimite_multas
+    criterio: maior_melhor
+    fundamento: "Sublimite maior para multas e penalidades administrativas amplia a proteção do patrimônio pessoal."
+  - id: R09
+    campo: premio_total
+    criterio: menor_melhor
+    fundamento: "Custo menor para o tomador. Atenção: prêmio não mede cobertura; leia junto com limites e exclusões."
+  - id: R10
+    campo: reintegracao_limite
+    criterio: ordem
+    ordem: [[com_reintegracao], [sem_reintegracao]]
+    fundamento: "Reintegração evita que o limite fique reduzido para sinistros seguintes na mesma vigência."
+  - id: R11
+    campo: custos_defesa_no_limite
+    criterio: ordem
+    ordem: [[adicional_ao_limite], [dentro_do_limite]]
+    fundamento: "Custos de defesa fora do limite preservam o LMG para indenizações."
+
+  - id: R12
+    campo: base_contratacao
+    criterio: ordem
+    ordem: [[ocorrencia], [reclamacao_com_notificacao, primeira_manifestacao], [reclamacao]]
+    fundamento: "A cláusula de notificação vincula reclamações futuras a fatos notificados na vigência (Circular 637, art. 24); claims made puro não tem essa proteção."
+  - id: R13
+    campo: data_retroatividade
+    criterio: retroatividade
+    fundamento: "Retroatividade ilimitada ou mais antiga cobre atos de gestão passados desconhecidos (Circular 637, arts. 17 e 22)."
+  - id: R14
+    campo: prazo_complementar
+    criterio: maior_melhor
+    fundamento: "Prazo adicional gratuito mais longo protege ex-administradores após o fim da apólice (Circular 637, art. 19)."
+  - id: R15
+    campo: prazo_suplementar
+    criterio: maior_melhor
+    fundamento: "Opção de prazo suplementar mais longa amplia o período para reclamações futuras."
+
+  # coberturas: básica ou contratada > disponível por contratação > inexistente > não contratada/excluída
+  - {id: R16, campo: cobertura_a, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "A Cobertura A protege diretamente o patrimônio pessoal quando a empresa não pode indenizar (insolvência, vedação legal)."}
+  - {id: R17, campo: cobertura_b, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "A Cobertura B reembolsa a empresa que indenizou seus administradores."}
+  - {id: R18, campo: cobertura_c, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "A Cobertura C protege a própria empresa em reclamações do mercado de capitais."}
+  - {id: R19, campo: adiantamento_custos_defesa, criterio: ordem, ordem: [[adiantamento], [reembolso]],
+     fundamento: "Adiantamento contínuo (duty to pay) evita que o executivo financie a própria defesa até o fim do processo."}
+  - {id: R20, campo: livre_escolha_advogado, criterio: ordem, ordem: [[true], [false]], ausente_como: false,
+     fundamento: "Livre escolha do advogado, sem imposição de referenciados (Circular 637, art. 9º, II)."}
+  - {id: R21, campo: penhora_online, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Bloqueio de bens é risco frequente e imediato para administradores no Brasil."}
+  - {id: R22, campo: multas_penalidades, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Multas cíveis e administrativas de reguladores (CVM, CADE, Bacen) são seguráveis quando não decorrem de dolo."}
+  - {id: R23, campo: custos_investigacao, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Cobertura desde a fase investigativa evita custo sem proteção antes da reclamação formal."}
+  - {id: R24, campo: herdeiros_conjuges, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Extensão a cônjuges, herdeiros e espólio protege o patrimônio familiar."}
+  - {id: R25, campo: dano_ambiental, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Responsabilização pessoal por dano ambiental é exposição relevante em setores regulados."}
+  - {id: R26, campo: praticas_trabalhistas, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Reclamações trabalhistas contra administradores são das mais frequentes."}
+  - {id: R27, campo: gerenciamento_crise, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Custos de crise e reputação acompanham reclamações de grande exposição."}
+  - {id: R28, campo: custos_extradicao, criterio: ordem, ordem: [[basica, contratada], [adicional], [nao_prevista, nao_contratada], [excluida]], ausente_como: nao_prevista,
+     fundamento: "Relevante para grupos com operação internacional."}
+
+  - id: R29
+    campo: exclusao_dolo_gatilho
+    criterio: ordem
+    ordem: [[decisao_final], [decisao_nao_definitiva], [sem_gatilho]]
+    fundamento: "Exclusão de dolo só após decisão final (final adjudication) garante defesa custeada durante todo o processo."
+  - {id: R30, campo: exclusao_insolvencia, criterio: ordem, ordem: [[nao_excluido], [exclusao_opcional], [excluido_com_ressalva], [excluido]], ausente_como: nao_excluido,
+     fundamento: "Exclusão de insolvência elimina proteção exatamente quando a empresa não pode indenizar."}
+  - {id: R31, campo: exclusao_danos_corporais_materiais, criterio: ordem, ordem: [[nao_excluido], [exclusao_opcional], [excluido_com_ressalva], [excluido]], ausente_como: nao_excluido,
+     fundamento: "Ressalvas (ex.: danos a empregados) preservam parte da proteção."}
+  - {id: R32, campo: exclusao_litigios_previos, criterio: ordem, ordem: [[nao_excluido], [exclusao_opcional], [excluido_com_ressalva], [excluido]], ausente_como: nao_excluido,
+     fundamento: "Exclusão de fatos anteriores é padrão de mercado; diferenças de redação importam na migração entre seguradoras."}
+  - {id: R33, campo: exclusao_cibernetica, criterio: ordem, ordem: [[nao_excluido], [exclusao_opcional], [excluido_com_ressalva], [excluido]], ausente_como: nao_excluido,
+     fundamento: "Incidentes cibernéticos geram reclamações contra administradores (dever de diligência)."}
+  - {id: R34, campo: exclusao_tributaria, criterio: ordem, ordem: [[nao_excluido], [exclusao_opcional], [excluido_com_ressalva], [excluido]], ausente_como: nao_excluido,
+     fundamento: "Responsabilização tributária pessoal por redirecionamento de execução fiscal é frequente no Brasil."}
+
+  - id: R35
+    campo: ambito_geografico
+    criterio: ordem
+    ordem: [[mundial], [mundial_exceto_eua_canada], [brasil]]
+    fundamento: "Cobertura mundial protege grupos com subsidiárias, investidores ou processos no exterior."
+  - id: R36
+    campo: subrogacao_segurados
+    criterio: ordem
+    ordem: [[renuncia_salvo_dolo], [sem_renuncia]]
+    fundamento: "Renúncia à sub-rogação contra pessoas físicas seguradas (salvo dolo) evita que a seguradora cobre de volta dos administradores."
+  - {id: R37, campo: menciona_lei_15040, criterio: informativo}

@@ -103,6 +103,7 @@ class Ficha(BaseModel):
 class Favorabilidade(str, Enum):
     MAIS_FAVORAVEL = "mais_favoravel"
     MENOS_FAVORAVEL = "menos_favoravel"
+    INTERMEDIARIA = "intermediaria"
     EQUIVALENTE = "equivalente"
     NAO_COMPARAVEL = "nao_comparavel"
 

@@ -89,6 +89,7 @@ class Cascata:
     def __init__(self, provedores: list[tuple[str, object]]):
         self.provedores = provedores
         self.mortos: set[str] = set()
+        self.pausa_ate: dict[str, float] = {}
         self.ultimo_provedor = "nenhum"
         self.chamadas = 0
 
@@ -120,24 +121,34 @@ class Cascata:
 
         erro_final: Optional[Exception] = None
         for nome, modelo in self.provedores:
-            if nome in self.mortos:
+            # erro transitório (cota por minuto, sobrecarga) põe o provedor em pausa, não o mata;
+            # erro persistente (chave inválida, modelo inexistente) mata pelo resto da execução
+            if nome in self.mortos or self.pausa_ate.get(nome, 0) > time.time():
                 continue
-            for tentativa in range(2):
+            for tentativa in range(3):
                 try:
                     self.chamadas += 1
                     resposta = modelo.invoke([SystemMessage(content=sistema), HumanMessage(content=usuario)])
                     texto = texto_da_resposta(resposta)
+                    if not texto.strip():
+                        raise ValueError("resposta vazia")
                     self.ultimo_provedor = nome
-                    self._gravar(chave, {"provedor": nome, "texto": texto, "em": time.time()})
+                    if extrair_json(texto) is not None or "{" not in usuario:
+                        self._gravar(chave, {"provedor": nome, "texto": texto, "em": time.time()})
                     return texto, nome
-                except Exception as erro:  # cota, timeout, 5xx
+                except Exception as erro:
                     erro_final = erro
                     mensagem = str(erro).lower()
-                    if tentativa == 0 and any(s in mensagem for s in ("429", "rate", "503", "unavailable", "overloaded")):
-                        time.sleep(8)
+                    transitorio = any(s in mensagem for s in ("429", "rate", "503", "unavailable", "overloaded",
+                                                              "timeout", "timed out", "resposta vazia", "resource"))
+                    if transitorio and tentativa < 2:
+                        time.sleep(10 * (tentativa + 1))
                         continue
+                    if transitorio:
+                        self.pausa_ate[nome] = time.time() + 90
+                    else:
+                        self.mortos.add(nome)
                     break
-            self.mortos.add(nome)
             print(f"[LLM] {nome} falhou ({erro_final.__class__.__name__}); passando ao próximo provedor gratuito.")
         raise RuntimeError(f"todos os provedores gratuitos falharam: {erro_final}")
 
