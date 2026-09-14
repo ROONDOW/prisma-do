@@ -88,6 +88,8 @@ def resumo(comp: Comparacao, docs: list[Documento], cascata: Optional[Cascata]) 
     try:
         texto, provedor = cascata.perguntar(SISTEMA_RESUMO, dados)
         topicos = (extrair_json(texto) or {}).get("topicos") or []
+    except TimeoutError:
+        return base, "deterministico (LLM não respondeu a tempo)"
     except Exception:
         return base, "deterministico (LLM indisponível)"
     corpo = "\n".join(str(t).strip() for t in topicos if str(t).strip())
@@ -95,7 +97,9 @@ def resumo(comp: Comparacao, docs: list[Documento], cascata: Optional[Cascata]) 
         return base, "deterministico (resposta vazia do LLM)"
     if _RE_RECOMENDACAO.search(corpo):
         return base, "deterministico (LLM recomendou contratação; descartado)"
-    citados = {normalizar.texto_busca(m.group(0)) for m in _RE_NUMEROS.finditer(corpo)}
+    # o ponto final da frase não faz parte do valor: "R$ 500.000,00." == "R$ 500.000,00"
+    citados = {normalizar.texto_busca(m.group(0)).rstrip(".,;") for m in _RE_NUMEROS.finditer(corpo)}
+    permitidos = {p.rstrip(".,;") for p in permitidos}
     fora = [c for c in citados if c not in permitidos]
     if fora:
         return base, f"deterministico (LLM citou valor fora do quadro: {fora[0]})"

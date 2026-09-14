@@ -89,6 +89,9 @@ class Cascata:
     def __init__(self, provedores: list[tuple[str, object]]):
         self.provedores = provedores
         self.mortos: set[str] = set()
+        # tempo máximo por pergunta (segundos). Na interface, esperar minutos por um provedor
+        # congestionado é pior que cair no modo determinístico; em lote (avaliação), None = sem limite.
+        self.orcamento_s: Optional[float] = None
         self.pausa_ate: dict[str, float] = {}
         self.ultimo_provedor = "nenhum"
         self.chamadas = 0
@@ -120,7 +123,14 @@ class Cascata:
         from langchain_core.messages import HumanMessage, SystemMessage
 
         erro_final: Optional[Exception] = None
+        inicio = time.time()
+
+        def estourou() -> bool:
+            return self.orcamento_s is not None and time.time() - inicio > self.orcamento_s
+
         for nome, modelo in self.provedores:
+            if estourou():
+                break
             # erro transitório (cota por minuto, sobrecarga) põe o provedor em pausa, não o mata;
             # erro persistente (chave inválida, modelo inexistente) mata pelo resto da execução
             if nome in self.mortos or self.pausa_ate.get(nome, 0) > time.time():
@@ -141,8 +151,11 @@ class Cascata:
                     mensagem = str(erro).lower()
                     transitorio = any(s in mensagem for s in ("429", "rate", "503", "unavailable", "overloaded",
                                                               "timeout", "timed out", "resposta vazia", "resource"))
-                    if transitorio and tentativa < 2:
-                        time.sleep(10 * (tentativa + 1))
+                    if transitorio and tentativa < 2 and not estourou():
+                        espera = 10 * (tentativa + 1)
+                        if self.orcamento_s is not None:
+                            espera = min(espera, max(0.0, self.orcamento_s - (time.time() - inicio)))
+                        time.sleep(espera)
                         continue
                     if transitorio:
                         self.pausa_ate[nome] = time.time() + 90
@@ -150,6 +163,8 @@ class Cascata:
                         self.mortos.add(nome)
                     break
             print(f"[LLM] {nome} falhou ({erro_final.__class__.__name__}); passando ao próximo provedor gratuito.")
+        if estourou():
+            raise TimeoutError(f"LLM não respondeu em {self.orcamento_s:.0f}s (provedores gratuitos congestionados)")
         raise RuntimeError(f"todos os provedores gratuitos falharam: {erro_final}")
 
 
