@@ -1,0 +1,21 @@
+# PRISMA D&O — dependências diretas (15). Cada uma com o porquê.
+# Núcleo: roda inteiro SEM chave de API.
+
+pymupdf>=1.24          # leitura de PDF página a página e renderização para OCR
+rapidocr>=3.0          # OCR gratuito e offline (PP-OCR em ONNX), sem binário de sistema
+onnxruntime>=1.18      # motor de inferência do RapidOCR
+pillow>=10.0           # manipulação de imagem (corpus sintético escaneado)
+numpy>=1.26            # ruído de digitalização no corpus sintético
+pydantic>=2.6          # contratos de dados e validação das saídas
+PyYAML>=6.0            # esquema de campos e regras declaradas
+rank-bm25>=0.2.2       # recuperação local de cláusulas (sem embeddings pagos)
+langgraph>=0.2         # orquestração dos agentes em grafo de estado
+reportlab>=4.0         # relatório comparativo e relatório técnico em PDF
+streamlit>=1.36        # interface de demonstração
+pandas>=2.0            # tabelas da interface
+requests>=2.31         # download do corpus público com hash conferido
+python-dotenv>=1.0     # carrega o .env com as chaves gratuitas (opcional)
+pytest>=8.0            # testes
+
+# LLM gratuito (opcional): instale para o modo híbrido. Sem eles, modo determinístico.
+#   pip install langchain-core langchain-google-genai langchain-groq langchain-nvidia-ai-endpoints

@@ -25,7 +25,7 @@ _VARIAVEIS = ("GOOGLE_API_KEY", "GROQ_API_KEY", "NVIDIA_API_KEY")
 def _gemini():
     from langchain_google_genai import ChatGoogleGenerativeAI
 
-    return ChatGoogleGenerativeAI(model=os.environ.get("GEMINI_MODEL", "gemini-flash-latest"), temperature=0,
+    return ChatGoogleGenerativeAI(model=os.environ.get("GEMINI_MODEL", "gemini-3.5-flash"), temperature=0,
                                   google_api_key=os.environ["GOOGLE_API_KEY"], max_retries=1, timeout=120)
 
 
