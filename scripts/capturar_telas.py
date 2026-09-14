@@ -84,6 +84,8 @@ def main() -> None:
         aba(page, "💬 Pergunte")
         rolar(page, 0)
         page.get_by_placeholder("Ex.: A apólice cobre multas aplicadas pela CVM?").fill("A apólice cobre penhora online?")
+        page.keyboard.press("Enter")
+        esperar_streamlit(page)
         page.get_by_role("button", name="Perguntar").click()
         esperar_streamlit(page, 90)
         foto(page, "07_pergunte")

@@ -12,6 +12,7 @@ import html
 from dataclasses import dataclass, field
 from typing import Optional
 
+from prisma import normalizar
 from prisma.agentes import verificador
 from prisma.agentes.segmentador import blocos
 from prisma.armazem import Armazem
@@ -89,6 +90,14 @@ def perguntar(pergunta: str, docs: list[Documento], armazem: Armazem, cascata: O
     resposta = str(dados.get("resposta") or "").strip()
     if not verificadas or not resposta:
         return Resposta(texto=NAO_LOCALIZADO, modo=f"llm:{provedor}", descartadas=descartadas)
+    # Lei do Número Ancorado: todo valor em reais da resposta precisa estar numa citação conferida
+    citados = [normalizar.dinheiro(m.group(0)) for m in normalizar._RE_DINHEIRO.finditer(resposta)]
+    provados = [normalizar.dinheiro(m.group(0)) for c in verificadas for m in normalizar._RE_DINHEIRO.finditer(c["trecho"])]
+    if any(v is not None and not any(p is not None and abs(p - v) < 0.01 for p in provados) for v in citados):
+        return Resposta(texto="A resposta redigida citou valor que não aparece nos trechos conferidos; "
+                              "seguem só os trechos, para leitura direta.",
+                        citacoes=verificadas, modo=f"llm:{provedor} (valor não ancorado descartado)",
+                        descartadas=descartadas)
     return Resposta(texto=resposta[:1500], citacoes=verificadas, modo=f"llm:{provedor}", descartadas=descartadas)
 
 

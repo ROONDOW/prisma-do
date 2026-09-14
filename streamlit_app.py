@@ -26,6 +26,22 @@ CORES = {"mais_favoravel": "#d8f0dc", "menos_favoravel": "#f8d9d6", "intermediar
          "equivalente": "#e8eef7", "nao_comparavel": "#ffffff"}
 ROTULO_FAV = {"mais_favoravel": "▲ mais favorável", "menos_favoravel": "▼ menos favorável",
               "intermediaria": "◆ intermediária", "equivalente": "= equivalente", "nao_comparavel": ""}
+SIMBOLO_FAV = {"mais_favoravel": "▲", "menos_favoravel": "▼", "intermediaria": "◆", "equivalente": "=", "nao_comparavel": ""}
+CURTO = {"basica": "básica", "adicional": "adicional (contratável)", "contratada": "contratada",
+         "nao_contratada": "não contratada", "excluida": "excluída", "nao_prevista": "não prevista",
+         "excluido": "excluído", "excluido_com_ressalva": "excluído com ressalva", "exclusao_opcional": "exclusão opcional",
+         "nao_excluido": "não excluído", "reclamacao": "reclamações (sem notificação)",
+         "reclamacao_com_notificacao": "reclamações com notificação", "primeira_manifestacao": "primeira manifestação",
+         "ocorrencia": "ocorrência", "adiantamento": "adiantamento", "reembolso": "só reembolso",
+         "sem_reintegracao": "sem reintegração", "com_reintegracao": "com reintegração",
+         "dentro_do_limite": "dentro do limite", "adicional_ao_limite": "além do limite",
+         "decisao_final": "só após decisão final", "decisao_nao_definitiva": "antes da decisão final",
+         "sem_gatilho": "sem gatilho definido", "mundial": "mundial", "mundial_exceto_eua_canada": "mundial exceto EUA/Canadá",
+         "brasil": "Brasil", "renuncia_salvo_dolo": "renuncia (salvo dolo)", "sem_renuncia": "sem renúncia"}
+
+
+def texto_curto(v) -> str:
+    return CURTO.get(str(v.valor), v.valor_texto) if isinstance(v.valor, str) else v.valor_texto
 ROTULO_STATUS = {"verificado": "✅ verificado", "nao_verificado": "⚠️ reprovado", "nao_localizado": "— não localizado",
                  "definido_na_especificacao": "📄 na especificação"}
 
@@ -143,7 +159,9 @@ def seletor_documentos(chave: str, multiplo: bool, padrao=None):
         st.info("Processe documentos na aba Documentos.")
         return [] if multiplo else None
     if multiplo:
-        return st.multiselect("Documentos", list(opcoes), default=padrao or list(opcoes)[:2],
+        ficticios = [d["id"] for d in docs if d["ficticio"]]
+        inicial = padrao or (ficticios[:3] if len(ficticios) >= 2 else list(opcoes)[:2])
+        return st.multiselect("Documentos", list(opcoes), default=inicial,
                               format_func=lambda i: opcoes[i], key=chave, max_selections=4)
     return st.selectbox("Documento", list(opcoes), format_func=lambda i: opcoes[i], key=chave)
 
@@ -187,7 +205,7 @@ with tab_ficha:
                             continue
                         col1, col2, col3 = st.columns([3, 4, 2])
                         col1.markdown(f"**{seguro(campo.rotulo)}**")
-                        col2.markdown(seguro(v.valor_texto) if v.exibivel else "—")
+                        col2.markdown(seguro(texto_curto(v)) if v.exibivel else "—")
                         col3.markdown(ROTULO_STATUS[v.status.value])
                         if v.exibivel and v.evidencia:
                             with st.popover("Evidência", use_container_width=False):
@@ -225,20 +243,23 @@ with tab_comp:
                 v = l.valores.get(d.id)
                 fav = l.classificacao.get(d.id, Favorabilidade.NAO_COMPARAVEL).value
                 if v and v.status == StatusEvidencia.VERIFICADO:
-                    texto = f"{v.valor_texto} (p.{v.evidencia.pagina})"
+                    texto = f"{texto_curto(v)} · p.{v.evidencia.pagina}"
                 elif v and v.status == StatusEvidencia.NA_ESPECIFICACAO:
                     texto = "na especificação"
                 else:
                     texto = "não localizado"
-                linha[d.rotulo] = f"{texto}  {ROTULO_FAV[fav]}".strip()
+                linha[d.rotulo] = f"{SIMBOLO_FAV[fav]} {texto}".strip()
                 estilo[d.rotulo] = f"background-color: {CORES[fav]}"
             linhas.append(linha)
             estilos.append(estilo)
         if linhas:
+            st.caption("▲ mais favorável ao segurado · ▼ menos favorável · ◆ intermediária · = equivalente · "
+                       "p. = página da evidência · sem símbolo = informativo ou não comparável")
             df = pd.DataFrame(linhas)
             st.dataframe(df.style.apply(lambda _: pd.DataFrame(estilos, index=df.index, columns=df.columns), axis=None),
                          hide_index=True, use_container_width=True, height=min(760, 36 * (len(linhas) + 1)),
-                         column_config={"Campo": st.column_config.TextColumn(width="medium")})
+                         column_config={"Campo": st.column_config.TextColumn(width=230),
+                                        **{d.rotulo: st.column_config.TextColumn(width=250) for d in docs}})
         st.subheader("Por que essa classificação?")
         # primeiro os campos com juízo de favorabilidade; os informativos (seguradora, processo…) por último
         campos_dif = sorted([l for l in comp.linhas if l.diferente],
