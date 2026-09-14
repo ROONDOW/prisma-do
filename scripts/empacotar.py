@@ -21,7 +21,7 @@ def main() -> int:
                    cwd=RAIZ, check=True)
     with zipfile.ZipFile(destino) as z:
         nomes = z.namelist()
-    vazados = [n for n in nomes if any(p in n and not n.endswith((".gitkeep", ".example", "fontes.yaml"))
+    vazados = [n for n in nomes if not n.endswith("/") and any(p in n and not n.endswith((".gitkeep", ".example", "fontes.yaml"))
                                        for p in PROIBIDOS)]
     if vazados:
         print("ERRO: arquivos que não podem ir no ZIP:", vazados)
