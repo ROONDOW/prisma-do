@@ -200,7 +200,8 @@ streamlit_app.py        interface
 
 Na pasta [`Projeto_Final_Artefatos/`](Projeto_Final_Artefatos/):
 `Relatorio_Tecnico_PRISMA_DO.pdf` · `InsurMinds_Projeto_Final.pptx` · `InsurMinds_Projeto_Final.mp4` ·
-relatórios comparativos de exemplo.
+`Relatorio_Comparativo_Exemplo_Ficticio.pdf` (três cotações fictícias, gerado sem chave de API) · `telas/`.
+Roteiro sugerido para o vídeo: [`docs/roteiro_video.md`](docs/roteiro_video.md).
 
 ## Integrantes
 
