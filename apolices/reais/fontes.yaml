@@ -49,6 +49,28 @@ documentos:
     url: https://www.argo-protector.com.br/empresarios/downloads/Condicoes_Gerais.pdf
     sha256: e8f6b7d6192f53fbf9e3f73676982f63215f48d76b04e5dcc7c94a7c3bca22cf
 
+# Documentos de HOLDOUT: nunca usados para escrever regras; só para medir generalização.
+holdout:
+  - id: sompo_2025
+    arquivo: sompo_do_2025.pdf
+    pasta: holdout
+    seguradora: Sompo Seguros S.A.
+    produto: Sompo Seguro de Responsabilidade Civil D&O (versão 1.5)
+    processo_susep: "15414.652408/2023-71"
+    versao: "novembro/2025 (comercializados a partir de 29/11/2025)"
+    url: https://sompo.com.br/documents/d/guest/cg-rcd-o_28112025-71-v1-5
+    sha256: a6964c4f6098bdf1791c880560317f9986c9bd958da462ba0cba44c9e7dad688
+
+  - id: chubb_capital_fechado
+    arquivo: chubb_do_capital_fechado.pdf
+    pasta: holdout
+    seguradora: Chubb Seguros Brasil
+    produto: RC D&O Capital Fechado
+    processo_susep: "15414.900832/2017-90"
+    versao: "202512"
+    url: https://www.chubb.com/content/dam/chubb-sites/chubb-com/br-pt/condicoes-gerais/diretores-e-administradores/capital-fechado-processo-susep-15414-900832-2017-90-versao-a-partir-de-16-12-2025.pdf
+    sha256: bd070d40cdb7b99db5dd53e9652caf46cb7adade8d7dc2fe534f3c8c05820396
+
 normas:
   - id: susep_637_2021
     arquivo: susep_circular_637_2021.pdf

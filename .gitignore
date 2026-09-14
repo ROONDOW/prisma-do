@@ -10,3 +10,4 @@ saida/
 apolices/reais/*.pdf
 !apolices/reais/.gitkeep
 .streamlit/secrets.toml
+apolices/holdout/*.pdf

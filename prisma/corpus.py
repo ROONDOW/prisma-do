@@ -18,7 +18,7 @@ def fontes() -> dict:
 
 def metadados_por_sha(sha256: str) -> Optional[dict]:
     dados = fontes()
-    for item in dados.get("documentos", []) + dados.get("normas", []):
+    for item in dados.get("documentos", []) + dados.get("holdout", []) + dados.get("normas", []):
         if item.get("sha256") == sha256:
             return {k: v for k, v in item.items() if k not in ("sha256",)}
     return None
@@ -32,8 +32,10 @@ def baixar(forcar: bool = False, avisar=print) -> list[Path]:
 
     baixados = []
     dados = fontes()
-    for item in dados.get("documentos", []) + dados.get("normas", []):
-        destino = config.REAIS / item["arquivo"]
+    for item in dados.get("documentos", []) + dados.get("holdout", []) + dados.get("normas", []):
+        pasta = config.HOLDOUT if item.get("pasta") == "holdout" else config.REAIS
+        pasta.mkdir(parents=True, exist_ok=True)
+        destino = pasta / item["arquivo"]
         if destino.exists() and not forcar and hashlib.sha256(destino.read_bytes()).hexdigest() == item["sha256"]:
             avisar(f"já existe  {item['arquivo']}")
             baixados.append(destino)
