@@ -63,10 +63,20 @@ def _quadro_para_llm(comp: Comparacao, docs: list[Documento]) -> tuple[str, set[
         if not valores:
             continue
         tabela.append({"campo": l.rotulo, "valores": valores,
-                       "favorabilidade": {por_id[k].rotulo: f.value for k, f in l.classificacao.items()},
+                       "favorabilidade": {por_id[k].rotulo: FAV_LEGIVEL[f.value] for k, f in l.classificacao.items()},
                        "regra": l.motivo[:200]})
     alertas = [{"documento": por_id[a.doc_id].rotulo, "artigo": a.artigo, "mensagem": a.mensagem} for a in comp.alertas]
     return json.dumps({"quadro": tabela, "alertas": alertas}, ensure_ascii=False), permitidos
+
+
+FAV_LEGIVEL = {"mais_favoravel": "mais favorável ao segurado", "menos_favoravel": "menos favorável ao segurado",
+               "intermediaria": "intermediária", "equivalente": "equivalente", "nao_comparavel": "não comparável"}
+_RE_CODIGO = re.compile("|".join(FAV_LEGIVEL))
+
+
+def _sem_codigos(texto: str) -> str:
+    """O leitor é um corretor: troca códigos internos que o modelo copiar por palavras."""
+    return _RE_CODIGO.sub(lambda m: FAV_LEGIVEL[m.group(0)], texto)
 
 
 SISTEMA_RESUMO = """Você escreve o resumo executivo de uma comparação de apólices D&O para um corretor.
@@ -76,6 +86,7 @@ Use SOMENTE os dados do JSON. Regras:
 3. Não recomende contratar nenhuma apólice e não diga qual é "a melhor": descreva diferenças e onde cada
    documento é mais ou menos favorável ao segurado, segundo a coluna favorabilidade.
 4. Mencione os alertas de conformidade, se houver.
+5. Escreva para um corretor: linguagem simples, sem códigos internos nem nomes de campo em snake_case.
 Responda apenas JSON: {"topicos": ["- ...", "- ..."]}"""
 
 
@@ -92,7 +103,7 @@ def resumo(comp: Comparacao, docs: list[Documento], cascata: Optional[Cascata]) 
         return base, "deterministico (LLM não respondeu a tempo)"
     except Exception:
         return base, "deterministico (LLM indisponível)"
-    corpo = "\n".join(str(t).strip() for t in topicos if str(t).strip())
+    corpo = _sem_codigos("\n".join(str(t).strip() for t in topicos if str(t).strip()))
     if not corpo:
         return base, "deterministico (resposta vazia do LLM)"
     if _RE_RECOMENDACAO.search(corpo):

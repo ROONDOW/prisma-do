@@ -66,7 +66,7 @@ def main():
         page.locator('input[type="file"]').set_input_files([str(config.SINTETICAS / n) for n in ARQUIVOS])
         time.sleep(2.0)
         marca("arquivos_escolhidos")
-        page.get_by_role("button", name="Processar").click()
+        page.get_by_role("button", name="Processar 3 arquivo(s)").click()
         marca("processar_clicado")
         esperar_streamlit(page, 300)
         marca("processado")
@@ -82,7 +82,7 @@ def main():
         marca("recarregado")
 
         # --- ficha e evidência
-        page.get_by_role("tab", name="🗂️ Ficha").click()
+        page.get_by_role("tab", name="2 · Ficha").click()
         esperar_streamlit(page)
         page.get_by_role("combobox").first.click()
         page.keyboard.type("Boreal")
@@ -103,7 +103,7 @@ def main():
         time.sleep(1.0)
 
         # --- comparação
-        page.get_by_role("tab", name="⚖️ Comparar").click()
+        page.get_by_role("tab", name="3 · Comparar").click()
         esperar_streamlit(page)
         marca("aba_comparar")
         page.get_by_role("button", name="Comparar").click()

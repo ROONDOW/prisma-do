@@ -199,7 +199,7 @@ def main():
     # 5 — demonstração
     s = D.slide()
     D.titulo(s, "Na prática", "Três cotações para a mesma empresa, em formatos diferentes, lado a lado.")
-    D.imagem(s, recorte("05_comparacao_quadro", (378, 190, 1362, 740)), Inches(0.6), Inches(2.0), Inches(8.4))
+    D.imagem(s, recorte("05_comparacao_quadro", (378, 150, 1362, 720)), Inches(0.6), Inches(2.0), Inches(8.4))
     D.lista(s, [("Verde ", "= mais favorável ao segurado"), ("Vermelho ", "= menos favorável"),
                 ("p. ", "= página da evidência"), ("Por quê? ", "cada classificação cita a regra e o fundamento")],
             Inches(9.2), Inches(2.3), Inches(3.7), 16)
@@ -212,7 +212,7 @@ def main():
                 ("3. Contém o número ", "extraído: R$ 30.000.000,00 tem que estar no trecho."),
                 ("4. Não é instrução ", "dirigida a IA escondida no documento.")],
             Inches(0.6), Inches(2.2), Inches(6.4), 18)
-    D.imagem(s, recorte("03_ficha_coberturas", (378, 60, 1362, 700)), Inches(7.1), Inches(2.0), Inches(5.8))
+    D.imagem(s, recorte("03_ficha_evidencia", (378, 400, 1362, 870)), Inches(7.1), Inches(2.0), Inches(5.8))
 
     # 7 — conformidade
     s = D.slide()
@@ -222,7 +222,7 @@ def main():
                 ("Art. 17 — ", "retroatividade precisa estar indicada em destaque."),
                 ("Lei 15.040/2024 — ", "sinaliza condições que não citam a nova Lei de Seguros.")],
             Inches(0.6), Inches(2.2), Inches(6.6), 17)
-    D.imagem(s, recorte("06_comparacao_conformidade", (378, 300, 1362, 900)), Inches(7.2), Inches(2.0), Inches(5.7))
+    D.imagem(s, recorte("06_comparacao_conformidade", (378, 120, 1362, 745)), Inches(7.2), Inches(2.0), Inches(5.7))
     D.texto(s, "Indícios para revisão humana — não é parecer jurídico.", Inches(0.6), Inches(6.3), Inches(8), Inches(0.4), 13, cor=CINZA)
 
     # 8 — resultados

@@ -21,11 +21,12 @@ DESTINO = RAIZ / "Projeto_Final_Artefatos" / "telas"
 def esperar_streamlit(page: Page, segundos: float = 90) -> None:
     """Espera o Streamlit terminar de rodar o script (some o indicador 'Running')."""
     fim = time.time() + segundos
+    ocupado = '[data-testid="stStatusWidget"], [data-testid="stSpinner"], [data-stale="true"]'
     time.sleep(1.5)
     while time.time() < fim:
-        if page.locator('[data-testid="stStatusWidget"]').count() == 0:
+        if page.locator(ocupado).count() == 0:
             time.sleep(1.0)
-            if page.locator('[data-testid="stStatusWidget"]').count() == 0:
+            if page.locator(ocupado).count() == 0:
                 return
         time.sleep(0.5)
 
@@ -62,21 +63,20 @@ def main() -> None:
         esperar_streamlit(page, 120)
         foto(page, "01_documentos")
 
-        aba(page, "🗂️ Ficha")
-        page.get_by_role("combobox").first.click()
-        page.keyboard.type("Chubb Seguros Brasil")
-        page.keyboard.press("Enter")
-        esperar_streamlit(page)
-        foto(page, "02_ficha_chubb")
-        rolar(page, 700)
-        foto(page, "03_ficha_coberturas")
+        aba(page, "2 · Ficha")  # abre na cotação fictícia Aurora, onde há números
+        foto(page, "02_ficha")
+        page.get_by_role("button", name="Evidência").first.click()
+        time.sleep(1.5)
+        foto(page, "03_ficha_evidencia")
+        page.keyboard.press("Escape")
+        time.sleep(0.8)
 
-        aba(page, "⚖️ Comparar")
+        aba(page, "3 · Comparar")
         rolar(page, 0)
         page.get_by_role("button", name="Comparar").click()
         esperar_streamlit(page, 120)
         foto(page, "04_comparacao_resumo")
-        rolar(page, 850)
+        rolar(page, 900)
         foto(page, "05_comparacao_quadro")
         rolar(page, 2000)
         foto(page, "06_comparacao_conformidade")
@@ -90,9 +90,9 @@ def main() -> None:
         esperar_streamlit(page, 90)
         foto(page, "07_pergunte")
 
-        aba(page, "🧭 Agentes")
+        aba(page, "🧭 Como funciona")
         foto(page, "08_agentes")
-        aba(page, "📏 Avaliação")
+        aba(page, "📏 Qualidade")
         foto(page, "09_avaliacao")
         contexto.close()
         navegador.close()

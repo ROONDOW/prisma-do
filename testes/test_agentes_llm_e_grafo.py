@@ -116,3 +116,13 @@ def test_relator_descarta_resumo_com_recomendacao_ou_numero_inventado(tmp_path):
     assert "fora do quadro" in modo2
     texto, modo3 = relator.resumo(comp, docs, LLMFalso({"topicos": ["- A Aurora tem LMG de R$ 50.000.000,00."]}))
     assert modo3.startswith("llm") and "50.000.000" in texto
+
+
+def test_relator_troca_codigos_internos_por_palavras(tmp_path):
+    a, e1 = _armazem_com_aurora(tmp_path)
+    e2 = grafo.processar("especificacao_boreal_digital.pdf",
+                         (config.SINTETICAS / "especificacao_boreal_digital.pdf").read_bytes(), a)
+    docs = [a.documento(e1["documento"].id), a.documento(e2["documento"].id)]
+    comp = grafo.comparar([d.id for d in docs], a)["comparacao"]
+    texto, modo = relator.resumo(comp, docs, LLMFalso({"topicos": ["- LMG: Aurora R$ 50.000.000,00 (mais_favoravel)."]}))
+    assert modo.startswith("llm") and "mais favorável ao segurado" in texto and "mais_favoravel" not in texto
