@@ -78,14 +78,14 @@ class Deck:
         if sub:
             self.texto(s, sub, Inches(0.6), Inches(1.4), Inches(12), Inches(0.6), 16, cor=CINZA if not escuro else CLARO)
 
-    def cartao(self, s, x, y, w, h, grande, legenda, cor_num=MARINHO, fundo=CLARO):
+    def cartao(self, s, x, y, w, h, grande, legenda, cor_num=MARINHO, fundo=CLARO, tam=34, cor_leg=CINZA):
         r = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h)
         r.adjustments[0] = 0.08
         r.fill.solid()
         r.fill.fore_color.rgb = fundo
         r.line.fill.background()
-        self.texto(s, grande, x, y + Inches(0.18), w, Inches(0.9), 34, cor=cor_num, negrito=True, alinhar=PP_ALIGN.CENTER)
-        self.texto(s, legenda, x + Inches(0.15), y + Inches(1.05), w - Inches(0.3), h - Inches(1.1), 12.5, cor=CINZA,
+        self.texto(s, grande, x, y + Inches(0.18), w, Inches(0.9), tam, cor=cor_num, negrito=True, alinhar=PP_ALIGN.CENTER)
+        self.texto(s, legenda, x + Inches(0.15), y + Inches(1.05), w - Inches(0.3), h - Inches(1.1), 14, cor=cor_leg,
                    alinhar=PP_ALIGN.CENTER)
 
     def imagem(self, s, arq, x, y, largura):
@@ -109,6 +109,18 @@ class Deck:
             r2.text = resto
             r2.font.size, r2.font.name, r2.font.color.rgb = Pt(tamanho), FONTE, CINZA
         return caixa
+
+
+def recorte(nome: str, caixa: tuple[int, int, int, int]) -> Path:
+    """Recorta a área útil de uma tela (sem barra lateral) para ficar legível no slide."""
+    from PIL import Image
+
+    origem = TELAS / f"{nome}.png"
+    destino = TELAS / "recortes" / f"{nome}.png"
+    if origem.exists():
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        Image.open(origem).crop(caixa).save(destino)
+    return destino
 
 
 def recortar_diagrama() -> Path | None:
@@ -179,7 +191,7 @@ def main():
     D.titulo(s, "Como funciona", "Nove agentes especializados orquestrados em dois grafos LangGraph.")
     diag = recortar_diagrama()
     if diag:
-        D.imagem(s, diag, Inches(0.9), Inches(2.0), Inches(11.5))
+        D.imagem(s, diag, Inches(1.6), Inches(1.95), Inches(10.1))
     else:
         D.texto(s, "Recepcionista → Leitor → Segmentador → Extrator → Verificador → Comparador → Conformidade → Relator",
                 Inches(0.6), Inches(3), Inches(12), Inches(1), 20)
@@ -187,7 +199,7 @@ def main():
     # 5 — demonstração
     s = D.slide()
     D.titulo(s, "Na prática", "Três cotações para a mesma empresa, em formatos diferentes, lado a lado.")
-    D.imagem(s, TELAS / "05_comparacao_quadro.png", Inches(0.6), Inches(2.0), Inches(8.3))
+    D.imagem(s, recorte("05_comparacao_quadro", (378, 190, 1362, 740)), Inches(0.6), Inches(2.0), Inches(8.4))
     D.lista(s, [("Verde ", "= mais favorável ao segurado"), ("Vermelho ", "= menos favorável"),
                 ("p. ", "= página da evidência"), ("Por quê? ", "cada classificação cita a regra e o fundamento")],
             Inches(9.2), Inches(2.3), Inches(3.7), 16)
@@ -200,7 +212,7 @@ def main():
                 ("3. Contém o número ", "extraído: R$ 30.000.000,00 tem que estar no trecho."),
                 ("4. Não é instrução ", "dirigida a IA escondida no documento.")],
             Inches(0.6), Inches(2.2), Inches(6.4), 18)
-    D.imagem(s, TELAS / "03_ficha_coberturas.png", Inches(7.2), Inches(2.1), Inches(5.6))
+    D.imagem(s, recorte("03_ficha_coberturas", (378, 60, 1362, 700)), Inches(7.1), Inches(2.0), Inches(5.8))
 
     # 7 — conformidade
     s = D.slide()
@@ -210,7 +222,7 @@ def main():
                 ("Art. 17 — ", "retroatividade precisa estar indicada em destaque."),
                 ("Lei 15.040/2024 — ", "sinaliza condições que não citam a nova Lei de Seguros.")],
             Inches(0.6), Inches(2.2), Inches(6.6), 17)
-    D.imagem(s, TELAS / "06_comparacao_conformidade.png", Inches(7.4), Inches(2.1), Inches(5.4))
+    D.imagem(s, recorte("06_comparacao_conformidade", (378, 300, 1362, 900)), Inches(7.2), Inches(2.0), Inches(5.7))
     D.texto(s, "Indícios para revisão humana — não é parecer jurídico.", Inches(0.6), Inches(6.3), Inches(8), Inches(0.4), 13, cor=CINZA)
 
     # 8 — resultados
@@ -223,13 +235,13 @@ def main():
     if hib:
         cartoes += [(pct(hib["resumo"]["holdout"]), "com LLM gratuito no holdout\n(onde as regras não bastam)")]
     if det and det.get("ocr"):
-        cartoes += [(f"{100 * det['ocr']['cer_medio']:.2f}%", "erro de caractere do OCR\n(por linha)")]
+        cartoes += [(f"{100 * det['ocr']['cer_medio']:.2f}%".replace(".", ","),"erro de caractere do OCR\n(por linha)")]
     cartoes += [("15/15", "injeções de prompt barradas\n0 falso positivo")]
     largura = Inches(12.1 / len(cartoes)) - Inches(0.15)
     for i, (g, l) in enumerate(cartoes):
         D.cartao(s, Inches(0.6) + i * (largura + Inches(0.15)), Inches(2.4), largura, Inches(2.6), g, l, cor_num=DOURADO,
-                 fundo=RGBColor(0x22, 0x2D, 0x45))
-    D.texto(s, "Publicamos o holdout de propósito: as regras foram escritas sobre as seguradoras que lemos; o LLM é o que generaliza.",
+                 fundo=RGBColor(0x22, 0x2D, 0x45), cor_leg=CLARO)
+    D.texto(s, "Publicamos o holdout de propósito: as regras foram escritas sobre as seguradoras que lemos. Em documento novo, o LLM acrescenta acerto — e o Verificador segura o que ele erra.",
             Inches(0.6), Inches(5.5), Inches(12), Inches(0.8), 16, cor=CLARO)
 
     # 9 — diferenciais
@@ -260,7 +272,7 @@ def main():
     for i, (g, l) in enumerate([("Corretores", "comparar propostas e explicar ao cliente onde cada uma é melhor"),
                                 ("Gestores de risco", "conferir renovação e mudanças de redação entre versões"),
                                 ("Seguradoras", "revisar conformidade de condições com a Circular 637")]):
-        D.cartao(s, Inches(0.6) + i * Inches(4.15), Inches(2.4), Inches(3.9), Inches(2.4), g, l)
+        D.cartao(s, Inches(0.6) + i * Inches(4.15), Inches(2.4), Inches(3.9), Inches(2.4), g, l, tam=26)
 
     # 12 — encerramento
     s = D.slide(MARINHO)
