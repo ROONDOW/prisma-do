@@ -53,9 +53,13 @@ sem chave: holdout 74,1% contra 75,9% e 19 valores errados exibidos contra 1. Em
 citou trecho verdadeiro e tirou conclusão errada — "excluída" para cobertura que o documento oferece
 como adicional; "renúncia à sub-rogação" onde o texto só protege o cônjuge — e provou ausências
 ("não excluído") com trechos quaisquer.
-**Correções (antes de olhar o holdout):** (1) valor verificado das regras prevalece; o LLM preenche o
-que as regras não acharam; (2) coerência valor × trecho declarada em `dados/coerencia.yaml`;
-(3) ausência não é citável e vira "não localizado".
+**Correções:** (1) valor verificado das regras prevalece; o LLM preenche o que as regras não acharam;
+(2) coerência valor × trecho declarada em `dados/coerencia.yaml`; (3) ausência não é citável e vira
+"não localizado".
+**Transparência:** a lista de erros analisada para chegar a essas correções **incluía documentos do
+holdout**. As correções são de mecanismo (fusão e verificação), não regras de extração escritas para
+uma seguradora, e nenhuma regra de extração foi alterada. Ainda assim, para esta etapa o holdout
+deixou de ser totalmente cego — o número do híbrido no holdout deve ser lido com essa ressalva.
 **Resultado:** híbrido 98,7% no desenvolvimento e 79,3% no holdout (4 errados exibidos); sem chave
 97,8% e 75,9% (1 errado exibido).
 

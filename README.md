@@ -85,7 +85,7 @@ Acurácia de extração contra o gabarito anotado. Conta como resposta só o val
 | ↳ especificações (PDF digital, escaneado, PNG) | 100.0% (78/78) | 0 | 100.0% (78/78) | 0 |
 | ↳ condições gerais reais | 96.5% (140/145) | 0 | 97.9% (142/145) | 1 |
 
-Gabarito: **281 campos** em 10 documentos. O holdout (Sompo e Chubb Capital Fechado) foi anotado antes de rodar o extrator, e as regras não foram ajustadas depois dele.
+Gabarito: **281 campos** em 10 documentos. O holdout (Sompo e Chubb Capital Fechado) foi anotado antes de rodar o extrator e nenhuma regra de extração foi ajustada depois dele. Ressalva: a correção da fusão LLM + regras (docs/DESVIOS.md, D9) foi feita depois de analisar erros que incluíam o holdout; leia o número do híbrido no holdout com essa ressalva.
 
 **OCR (RapidOCR)** em 7 páginas: CER alinhado por linha médio **0.03%** (máximo 0.10%); CER da página inteira, que também pune diferença de ordem de leitura, até 5.5%.
 <!-- RESULTADOS:FIM -->

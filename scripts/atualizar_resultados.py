@@ -45,7 +45,9 @@ def secao() -> str:
     docs = {i["documento"] for i in base["detalhe"]}
     campos = len(base["detalhe"])
     linhas += ["", f"Gabarito: **{campos} campos** em {len(docs)} documentos. O holdout (Sompo e Chubb Capital Fechado) "
-               "foi anotado antes de rodar o extrator, e as regras não foram ajustadas depois dele."]
+               "foi anotado antes de rodar o extrator e nenhuma regra de extração foi ajustada depois dele. "
+               "Ressalva: a correção da fusão LLM + regras (docs/DESVIOS.md, D9) foi feita depois de analisar erros que "
+               "incluíam o holdout; leia o número do híbrido no holdout com essa ressalva."]
     ocr = (det or {}).get("ocr") or (hib or {}).get("ocr")
     if ocr:
         paginas = ocr["paginas"]

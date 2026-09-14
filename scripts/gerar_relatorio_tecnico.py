@@ -326,7 +326,12 @@ def main():
         e.append(tabela(por_doc, [80 * mm, 47 * mm, 47 * mm]))
     e.append(P("<b>Leitura dos números.</b> No conjunto de desenvolvimento, as regras acertam quase tudo porque foram escritas "
                "sobre essas seguradoras. No holdout — em especial a Sompo, com redação que o sistema nunca viu — as regras "
-               "sozinhas caem, e é aí que o LLM mostra seu valor. Publicamos os dois números de propósito."))
+               "sozinhas caem. Publicamos os dois números de propósito. <b>Dois achados honestos:</b> (1) com a primeira "
+               "fusão, que dava prioridade ao LLM, o modo híbrido ficou <i>pior</i> que o sem chave (19 valores errados "
+               "exibidos); a correção — regras verificadas prevalecem e o Verificador exige coerência entre valor e "
+               "trecho — foi feita depois de analisar erros que incluíam o holdout, por isso o número do híbrido no "
+               "holdout deve ser lido com essa ressalva; (2) o erro restante do LLM tem uma forma só: marcar cobertura "
+               "como básica porque o termo aparece numa definição ou exclusão."))
     if det and det.get("ocr"):
         ocr = [["Página", "CER por linha", "CER página inteira", "Tempo"]]
         for p_ in det["ocr"]["paginas"]:
