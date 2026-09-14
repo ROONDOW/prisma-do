@@ -76,7 +76,18 @@ geográfico, sub-rogação e adequação à Lei 15.040/2024.
 ## Resultados medidos
 
 <!-- RESULTADOS:INICIO -->
-_Rode `python scripts/atualizar_resultados.py` depois de `avaliar` para preencher esta seção._
+Acurácia de extração contra o gabarito anotado. Conta como resposta só o valor **verificado** (o que o usuário veria na tela). "Errados exibidos" = valor verificado mas diferente do gabarito.
+
+| Conjunto | Sem chave (regras) | Errados exibidos | Híbrido (LLM + regras) | Errados exibidos |
+|---|---|---|---|---|
+| Conjunto de desenvolvimento | 97.8% (218/223) | 0 | 98.7% (220/223) | 1 |
+| **Holdout** (documentos nunca vistos) | 75.9% (44/58) | 1 | 79.3% (46/58) | 4 |
+| ↳ especificações (PDF digital, escaneado, PNG) | 100.0% (78/78) | 0 | 100.0% (78/78) | 0 |
+| ↳ condições gerais reais | 96.5% (140/145) | 0 | 97.9% (142/145) | 1 |
+
+Gabarito: **281 campos** em 10 documentos. O holdout (Sompo e Chubb Capital Fechado) foi anotado antes de rodar o extrator, e as regras não foram ajustadas depois dele.
+
+**OCR (RapidOCR)** em 7 páginas: CER alinhado por linha médio **0.03%** (máximo 0.10%); CER da página inteira, que também pune diferença de ordem de leitura, até 5.5%.
 <!-- RESULTADOS:FIM -->
 
 Como reproduzir: `python -m prisma.cli avaliar --modo deterministico --ocr` e

@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import re
 from difflib import SequenceMatcher
+from functools import lru_cache
+
+import yaml
 
 from prisma import config, normalizar
 from prisma.modelos import CampoDef, Documento, Evidencia, StatusEvidencia, ValorCampo
@@ -120,6 +123,41 @@ def _numero_confere(campo: CampoDef, valor, trecho: str) -> bool:
     return True
 
 
+@lru_cache(maxsize=1)
+def _coerencia() -> dict:
+    return yaml.safe_load((config.DADOS / "coerencia.yaml").read_text(encoding="utf-8"))
+
+
+def _texto_anterior(doc: Documento, trecho: str, pagina: int, limite: int) -> str:
+    """Texto que vem antes do trecho: da página citada para trás, até `limite` caracteres."""
+    alvo = normalizar.texto_busca(trecho)[:60]
+    partes = []
+    for num in range(pagina, max(0, pagina - 4), -1):
+        t = normalizar.texto_busca(doc.texto_pagina(num))
+        if num == pagina and alvo and alvo in t:
+            t = t[:t.index(alvo)]
+        partes.insert(0, t)
+        if sum(len(x) for x in partes) >= limite:
+            break
+    return " ".join(partes)[-limite:]
+
+
+def valor_coerente(campo: CampoDef, valor, trecho: str, doc: Documento | None = None,
+                   pagina: int | None = None) -> bool:
+    """O trecho sustenta ESTE valor? (ver dados/coerencia.yaml)"""
+    regras = _coerencia()
+    sinal = (regras["por_campo"].get(campo.id, {}) or {}).get(str(valor))
+    if sinal is None:
+        sinal = (regras["por_tipo"].get(campo.tipo, {}) or {}).get(str(valor))
+    if sinal is None:
+        return True
+    if re.search(sinal, normalizar.texto_busca(trecho)):
+        return True
+    if doc is not None and pagina and str(valor) in regras.get("contexto_anterior", []):
+        return re.search(sinal, _texto_anterior(doc, trecho, pagina, regras.get("caracteres_contexto", 12000))) is not None
+    return False
+
+
 def verificar(doc: Documento, campo: CampoDef, v: ValorCampo) -> ValorCampo:
     if v.status in (StatusEvidencia.NAO_LOCALIZADO, StatusEvidencia.NA_ESPECIFICACAO) and v.evidencia is None:
         return v
@@ -127,6 +165,9 @@ def verificar(doc: Documento, campo: CampoDef, v: ValorCampo) -> ValorCampo:
         return v.model_copy(update={"status": StatusEvidencia.NAO_VERIFICADO, "valor": None,
                                     "observacao": "sem trecho de evidência"})
     trecho = v.evidencia.trecho.strip()
+    if str(v.valor) in _coerencia()["ausencia_nao_citavel"]:
+        return v.model_copy(update={"status": StatusEvidencia.NAO_LOCALIZADO, "valor": None, "evidencia": None,
+                                    "observacao": "ausência não é provada por trecho; tratado como não localizado"})
     if instrucao_suspeita(trecho):
         return v.model_copy(update={"status": StatusEvidencia.NAO_VERIFICADO, "valor": None,
                                     "observacao": "trecho contém instrução dirigida a IA (possível injeção de prompt)"})
@@ -145,6 +186,9 @@ def verificar(doc: Documento, campo: CampoDef, v: ValorCampo) -> ValorCampo:
     if campo.tipo not in ("texto",) and not _fala_do_assunto(campo, trecho):
         return v.model_copy(update={"status": StatusEvidencia.NAO_VERIFICADO, "valor": None,
                                     "observacao": "o trecho não trata do assunto do campo"})
+    if not valor_coerente(campo, v.valor, trecho, doc, pagina):
+        return v.model_copy(update={"status": StatusEvidencia.NAO_VERIFICADO, "valor": None,
+                                    "observacao": f"o trecho não sustenta o valor '{v.valor}'"})
     if not _numero_confere(campo, v.valor, trecho):
         return v.model_copy(update={"status": StatusEvidencia.NAO_VERIFICADO, "valor": None,
                                     "observacao": "o número do valor não aparece no trecho citado"})

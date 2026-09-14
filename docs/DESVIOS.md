@@ -46,3 +46,22 @@ determinístico e a tela informa. Em lote (avaliação) não há limite.
 cita essa própria frase, o trecho existe, fala do assunto e tem o número — passaria nos três testes.
 **Feito:** o verificador reprova trecho com marcas de instrução dirigida a IA. Medido: 15/15 payloads
 barrados, 0 falso positivo em 13.492 janelas de texto real de apólice.
+
+## D9 — O LLM piorou o sistema até a fusão ser corrigida
+**Medido:** com a fusão original (valor do LLM tinha prioridade), o modo híbrido ficou **pior** que o
+sem chave: holdout 74,1% contra 75,9% e 19 valores errados exibidos contra 1. Em 13 casos o LLM
+citou trecho verdadeiro e tirou conclusão errada — "excluída" para cobertura que o documento oferece
+como adicional; "renúncia à sub-rogação" onde o texto só protege o cônjuge — e provou ausências
+("não excluído") com trechos quaisquer.
+**Correções (antes de olhar o holdout):** (1) valor verificado das regras prevalece; o LLM preenche o
+que as regras não acharam; (2) coerência valor × trecho declarada em `dados/coerencia.yaml`;
+(3) ausência não é citável e vira "não localizado".
+**Resultado:** híbrido 98,7% no desenvolvimento e 79,3% no holdout (4 errados exibidos); sem chave
+97,8% e 75,9% (1 errado exibido).
+
+## D10 — Modo de falha conhecido e não corrigido (para preservar o holdout)
+Os 4 erros exibidos do híbrido no holdout (e 1 no desenvolvimento) têm a mesma forma: o LLM marca
+cobertura como "básica" porque o termo aparece numa **definição** ou numa **exclusão**. Uma correção
+genérica é exigir linguagem de oferta de cobertura no trecho. Ela foi formulada depois de ver o
+holdout; aplicá-la agora mediria ajuste, não generalização. Fica registrada como próximo passo, a ser
+validada num novo conjunto de documentos.

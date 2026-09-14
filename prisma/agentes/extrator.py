@@ -517,13 +517,21 @@ def verificar_todos(doc: Documento, valores: dict[str, ValorCampo]) -> dict[str,
 
 
 def fundir(llm: dict[str, ValorCampo], det: dict[str, ValorCampo]) -> dict[str, ValorCampo]:
+    """Fusão medida (ver docs/DESVIOS.md, D9): o valor VERIFICADO das regras vence, porque as regras
+    erraram 1 vez em 281 campos e o LLM, com trecho verdadeiro, tirou conclusão errada 13 vezes.
+    O LLM preenche o que as regras não acharam. Discordância entre dois valores verificados fica
+    registrada na observação."""
     final = {}
     for cid, v in det.items():
         l = llm.get(cid)
-        if l is not None and l.status == StatusEvidencia.VERIFICADO:
+        l_ok = l is not None and l.status == StatusEvidencia.VERIFICADO
+        if v.status == StatusEvidencia.VERIFICADO:
+            if l_ok and l.valor != v.valor:
+                v = v.model_copy(update={"observacao": (v.observacao + f" (o LLM leu '{l.valor}' na pág. "
+                                                        f"{l.evidencia.pagina}; prevaleceu a regra)").strip()})
+            final[cid] = v
+        elif l_ok:
             final[cid] = l
-        elif v.status == StatusEvidencia.VERIFICADO:
-            final[cid] = v.model_copy(update={"observacao": (v.observacao + " (LLM não localizou/provou; valor das regras)").strip()})
         else:
             final[cid] = l if (l is not None and l.status == StatusEvidencia.NAO_VERIFICADO) else v
     return final

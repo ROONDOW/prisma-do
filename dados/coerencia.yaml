@@ -1,0 +1,56 @@
+# Coerência valor × trecho (usada pelo Verificador).
+#
+# A Citação Verificável garante que o trecho EXISTE e fala do assunto, mas não que ele sustenta o
+# VALOR escolhido: o LLM pode citar "Exclusões: danos ambientais" e concluir "excluída" para uma
+# cobertura que o próprio documento oferece como adicional. Aqui cada valor enumerado declara um
+# sinal linguístico que precisa aparecer no trecho (texto normalizado: sem acento, minúsculo).
+#
+# Valores de AUSÊNCIA ("nao_prevista", "nao_excluido") não são citáveis: ausência não se prova com
+# trecho. Vindos de qualquer extrator, viram "não localizado".
+#
+# Estes sinais são genéricos de redação de seguros, não ajustados a documento do gabarito.
+
+ausencia_nao_citavel: [nao_prevista, nao_excluido]
+
+# Itens de uma lista de exclusões ("c) Danos Corporais;") não repetem a palavra "exclusão": ela está no
+# título da cláusula, às vezes páginas antes. Para estes valores o sinal pode estar no texto ANTERIOR
+# ao trecho (até ~3 páginas); para os demais, tem que estar no próprio trecho.
+contexto_anterior: [excluido, excluida]
+caracteres_contexto: 12000
+
+por_tipo:
+  cobertura:
+    adicional: "adicional|extens|particular|especific|contrat|opcional|facultativ|mediante (o )?pagamento"
+    excluida: "exclu|nao cobre|nao estao cobertos|nao obriga|desobrigad|nao sera responsavel|nao respond"
+    contratada: "contratad"
+    nao_contratada: "nao contratad"
+  exclusao:
+    excluido: "exclu|nao cobre|nao sera responsavel|desobrigad|nao respond|nao estao cobertos"
+    excluido_com_ressalva: "(exclu|nao cobre|nao sera responsavel|desobrigad).*(salvo|exceto|ressalvad|a menos que)|(salvo|exceto)"
+    exclusao_opcional: "clausula (especifica|particular)"
+
+por_campo:
+  base_contratacao:
+    reclamacao_com_notificacao: "notifica"
+    reclamacao: "reclamac"
+    primeira_manifestacao: "manifestac|descoberta"
+    ocorrencia: "ocorrencia"
+  adiantamento_custos_defesa:
+    adiantamento: "adiant|antecip|a medida que|na medida (e nas condicoes )?em que"
+    reembolso: "reembols"
+  subrogacao_segurados:
+    renuncia_salvo_dolo: "nao (devera|ira|exercera|podera)[^.]{0,30}(exercer )?(seus )?direitos? de sub-?rogac[^.]{0,80}segurad"
+    sem_renuncia: "sub-?rogad|sub-?rogac|regresso"
+  ambito_geografico:
+    mundial_exceto_eua_canada: "estados unidos|eua|canada"
+    mundial: "mundo|mundial|qualquer (pais|lugar)"
+    brasil: "brasil|nacional"
+  exclusao_dolo_gatilho:
+    decisao_final: "transitad|final|irrecorr|definitiv|confiss"
+    decisao_nao_definitiva: "decisao|alegad|imputad"
+  reintegracao_limite:
+    sem_reintegracao: "nao (ha|havera|esta sujeito)[^.]{0,40}reintegr|sem reintegr"
+    com_reintegracao: "reintegr"
+  custos_defesa_no_limite:
+    dentro_do_limite: "limite"
+    adicional_ao_limite: "alem|adicional|excesso"
